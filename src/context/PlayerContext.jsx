@@ -120,7 +120,6 @@ export function PlayerProvider({ children }) {
   // Audio setup
   useEffect(() => {
     const audio = new Audio()
-    audio.crossOrigin = 'anonymous'
     audio.volume = volume
     audioRef.current = audio
     const onTime = () => setProgress(audio.currentTime)
@@ -339,7 +338,6 @@ export function PlayerProvider({ children }) {
         removeFromQueue,
         playNow: playTrackFromList,
         clearQueue,
-        playNow,
         playQueue
       }}
     >
