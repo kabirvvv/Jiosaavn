@@ -7,6 +7,7 @@ import { usePlayer, THEMES } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
 import { bestImageUrl, getSongSuggestions } from '../api/jiosaavn'
 import { formatTime, artistNames, stripHtml } from '../utils/format'
+
 export default function FullPlayerModal() {
   const {
     audioRef, currentTrack, queue, queueIndex, isPlaying, progress, duration, volume,
@@ -24,7 +25,7 @@ export default function FullPlayerModal() {
   const canvasRef = useRef(null)
   const rafRef = useRef(null)
   const phaseRef = useRef(0)
-  // Fetch song suggestions when current track changes
+
   useEffect(() => {
     if (!currentTrack?.id) return
     let isMounted = true
@@ -43,7 +44,7 @@ export default function FullPlayerModal() {
       })
     return () => { isMounted = false }
   }, [currentTrack?.id])
-  // Dynamic Full Canvas Audio Visualizer
+
   useEffect(() => {
     if (!isFullPlayerOpen || !canvasRef.current) return
     const canvas = canvasRef.current
@@ -90,7 +91,7 @@ export default function FullPlayerModal() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [isFullPlayerOpen, isPlaying])
-  // ESC key listener to close modal
+
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isFullPlayerOpen) {
@@ -100,22 +101,24 @@ export default function FullPlayerModal() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isFullPlayerOpen, setIsFullPlayerOpen])
+
   if (!isFullPlayerOpen || !currentTrack) return null
+
   const artwork = bestImageUrl(currentTrack.image)
   const title = stripHtml(currentTrack.title || currentTrack.name || '')
   const subtitle = artistNames(currentTrack)
   const liked = isLiked(currentTrack.id)
   const VolIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
   const RepeatIcon = repeatMode === 'one' ? Repeat1 : Repeat
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-chassis text-paper overflow-hidden animate-in fade-in duration-300">
-      {/* Background Animated Vibe Gradient */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-chassis text-paper overflow-hidden">
       <div
         className="absolute inset-0 z-0 bg-cover bg-center opacity-30 blur-3xl scale-125 transition-all duration-1000"
         style={{ backgroundImage: artwork ? `url(${artwork})` : 'none' }}
       />
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-chassis/80 via-chassis/95 to-chassis" />
-      {/* Top Header Navigation */}
+
       <header className="relative z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/40 backdrop-blur-md">
         <button
           onClick={() => setIsFullPlayerOpen(false)}
@@ -124,7 +127,6 @@ export default function FullPlayerModal() {
         >
           <ChevronDown size={22} />
         </button>
-        {/* Section Tabs */}
         <div className="flex items-center gap-1 bg-panel/80 border border-line/60 rounded-full p-1 shadow-inner">
           <button
             onClick={() => setActiveTab('player')}
@@ -153,7 +155,6 @@ export default function FullPlayerModal() {
             <span>Recommended</span>
           </button>
         </div>
-        {/* Settings Toggle */}
         <button
           onClick={() => setShowSettings(!showSettings)}
           className={`p-2 rounded-full border border-line transition-all ${
@@ -164,14 +165,11 @@ export default function FullPlayerModal() {
           <Settings size={20} />
         </button>
       </header>
-      {/* Main View Body */}
+
       <div className="relative z-10 flex-1 flex flex-col md:flex-row overflow-hidden max-w-6xl mx-auto w-full p-6 gap-8">
-        {/* Left / Center View Switcher */}
         {activeTab === 'player' && (
           <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full space-y-6">
-            {/* Glowing Album Artwork Shell */}
             <div className="relative w-64 h-64 sm:w-80 sm:h-80 aspect-square group">
-              {/* Art Glow */}
               <div
                 className={`absolute inset-0 rounded-3xl bg-signal opacity-30 blur-2xl transition-all duration-500 ${
                   isPlaying ? 'scale-110 opacity-50' : 'scale-95 opacity-20'
@@ -184,23 +182,19 @@ export default function FullPlayerModal() {
                   isPlaying ? 'scale-105' : 'scale-100'
                 }`}
               />
-              {/* Quality & Year Badges */}
               <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-chassis/80 border border-line/60 backdrop-blur-md text-[10px] font-mono text-signal font-bold">
                 <span>320 KBPS</span>
                 <span>•</span>
                 <span>HD AUDIO</span>
               </div>
             </div>
-            {/* Song Title & Artist */}
             <div className="text-center space-y-1.5 w-full">
               <h2 className="text-2xl sm:text-3xl font-display font-bold text-paper truncate px-2">{title}</h2>
               <p className="text-sm sm:text-base text-muted truncate px-2 font-medium">{subtitle}</p>
             </div>
-            {/* Interactive Visualizer Canvas */}
             <div className="w-full h-16 relative overflow-hidden rounded-xl bg-panel/30 border border-line/20">
               <canvas ref={canvasRef} className="w-full h-full" />
             </div>
-            {/* Scrubber Progress Bar */}
             <div className="w-full space-y-2">
               <div className="flex justify-between text-xs font-mono text-muted">
                 <span>{formatTime(progress)}</span>
@@ -218,7 +212,6 @@ export default function FullPlayerModal() {
                 }}
               />
             </div>
-            {/* Control Deck */}
             <div className="flex items-center justify-between w-full max-w-sm px-2">
               <button
                 onClick={() => setShuffle(!shuffle)}
@@ -251,7 +244,6 @@ export default function FullPlayerModal() {
                 )}
               </button>
             </div>
-            {/* Bottom Actions: Volume & Like */}
             <div className="flex items-center justify-between w-full max-w-sm px-4 pt-2">
               <button
                 onClick={() => toggleLiked({ ...currentTrack, title, subtitle })}
@@ -277,7 +269,7 @@ export default function FullPlayerModal() {
             </div>
           </div>
         )}
-        {/* Tab 2: Queue */}
+
         {activeTab === 'queue' && (
           <div className="flex-1 flex flex-col h-full overflow-hidden bg-panel/40 border border-line/40 rounded-2xl p-6 backdrop-blur-md">
             <div className="flex items-center justify-between mb-4 border-b border-line/40 pb-3">
@@ -293,7 +285,7 @@ export default function FullPlayerModal() {
                 <span>Clear Queue</span>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {queue.map((track, idx) => {
                 const isCurr = idx === queueIndex
                 const art = bestImageUrl(track.image)
@@ -332,7 +324,7 @@ export default function FullPlayerModal() {
             </div>
           </div>
         )}
-        {/* Tab 3: Recommendations */}
+
         {activeTab === 'recommendations' && (
           <div className="flex-1 flex flex-col h-full overflow-hidden bg-panel/40 border border-line/40 rounded-2xl p-6 backdrop-blur-md">
             <div className="mb-4 border-b border-line/40 pb-3">
@@ -342,7 +334,7 @@ export default function FullPlayerModal() {
               </h3>
               <p className="text-xs text-muted">Similar tracks selected for this frequency</p>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {loadingSuggestions ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -382,9 +374,9 @@ export default function FullPlayerModal() {
             </div>
           </div>
         )}
-        {/* Right Drawer: Settings Panel */}
+
         {showSettings && (
-          <aside className="w-full md:w-80 bg-panel/90 border border-line/60 rounded-2xl p-5 overflow-y-auto space-y-6 backdrop-blur-xl animate-in slide-in-from-right duration-300">
+          <aside className="w-full md:w-80 bg-panel/90 border border-line/60 rounded-2xl p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-line/40 pb-3">
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
                 <Sliders className="text-signal" size={18} />
@@ -394,7 +386,6 @@ export default function FullPlayerModal() {
                 <X size={18} />
               </button>
             </div>
-            {/* Theme Selector */}
             <div className="space-y-3">
               <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
                 <Palette size={14} className="text-signal" />
@@ -422,7 +413,6 @@ export default function FullPlayerModal() {
                 ))}
               </div>
             </div>
-            {/* Equalizer */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
@@ -431,7 +421,6 @@ export default function FullPlayerModal() {
                 </h4>
                 <span className="text-[10px] font-mono text-signal uppercase">{eqPreset}</span>
               </div>
-              {/* EQ Presets */}
               <div className="grid grid-cols-4 gap-1.5">
                 {['flat', 'bass', 'pop', 'chill'].map((p) => (
                   <button
@@ -445,7 +434,6 @@ export default function FullPlayerModal() {
                   </button>
                 ))}
               </div>
-              {/* EQ Sliders */}
               <div className="space-y-2 pt-1 text-xs font-mono text-muted">
                 <div className="flex items-center justify-between">
                   <span>Low Bass</span>
@@ -485,7 +473,6 @@ export default function FullPlayerModal() {
                 />
               </div>
             </div>
-            {/* Sleep Timer */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
