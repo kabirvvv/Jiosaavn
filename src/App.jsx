@@ -10,7 +10,7 @@ import ArtistPage from './pages/ArtistPage.jsx'
 import PlaylistPage from './pages/PlaylistPage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
 import FullPlayerModal from './components/FullPlayerModal.jsx'
-import HomePage from './pages/HomePage.jsx'
+import HomePage from './Pages/HomePage.jsx'
 
 
 export default function App() {
