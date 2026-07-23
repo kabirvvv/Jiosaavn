@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
-import { bestAudioUrl } from '../api/jiosaavn'
+import { bestAudioUrl, getSongById } from '../api/jiosaavn'
 
 const PlayerContext = createContext(null)
 
@@ -68,9 +68,29 @@ export function PlayerProvider({ children }) {
     }
   }, [])
 
-  const loadAndPlay = useCallback((track) => {
-    const url = bestAudioUrl(track.downloadUrl)
-    if (!url) return
+  const loadAndPlay = useCallback(async (track) => {
+    let playable = track
+    let url = bestAudioUrl(track.downloadUrl)
+
+    if (!url) {
+      // Search/list results often omit downloadUrl — fetch the full song record.
+      try {
+        const result = await getSongById(track.id)
+        const full = Array.isArray(result) ? result[0] : result
+        if (full) {
+          playable = { ...track, ...full, image: track.image || full.image }
+          url = bestAudioUrl(playable.downloadUrl)
+        }
+      } catch (e) {
+        console.warn('Failed to fetch full song details for playback', e)
+      }
+    }
+
+    if (!url) {
+      console.warn('No playable audio URL found for track', track)
+      return
+    }
+
     const audio = audioRef.current
     audio.src = url
     audio.currentTime = 0
