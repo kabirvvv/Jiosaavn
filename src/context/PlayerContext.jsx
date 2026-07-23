@@ -24,7 +24,6 @@ export function PlayerProvider({ children }) {
 
   useEffect(() => {
     const audio = new Audio()
-    audio.crossOrigin = 'anonymous'
     audio.volume = volume
     audioRef.current = audio
 
