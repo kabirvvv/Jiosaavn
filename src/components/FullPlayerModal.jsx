@@ -50,6 +50,17 @@ export default function FullPlayerModal() {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const dpr = window.devicePixelRatio || 1
+
+    // Resolve CSS custom properties to real color strings ONCE per effect run —
+    // Canvas 2D's addColorStop() cannot parse `var(...)` syntax, it needs an
+    // actual computed color value (hex/rgb/etc). Passing the raw CSS var
+    // string threw a SyntaxError on every animation frame, which — with no
+    // error boundary above this component — unmounted the whole app and
+    // killed audio playback via PlayerContext's cleanup.
+    const styles = getComputedStyle(document.documentElement)
+    const colorMain = styles.getPropertyValue('--accent-main').trim() || '#FF5C35'
+    const colorSecondary = styles.getPropertyValue('--accent-secondary').trim() || '#6FE7C5'
+
     function resize() {
       if (!canvas) return
       const rect = canvas.getBoundingClientRect()
@@ -77,8 +88,8 @@ export default function FullPlayerModal() {
         const x = i * barWidth
         const y = centerY - h / 2
         const gradient = ctx.createLinearGradient(0, y, 0, y + h)
-        gradient.addColorStop(0, 'var(--accent-main, #00ff88)')
-        gradient.addColorStop(1, 'var(--accent-secondary, #00d2ff)')
+        gradient.addColorStop(0, colorMain)
+        gradient.addColorStop(1, colorSecondary)
         ctx.fillStyle = gradient
         ctx.globalAlpha = isPlaying ? 0.75 : 0.25
         ctx.fillRect(x, y, barWidth - 2, Math.max(3, h))
@@ -90,7 +101,7 @@ export default function FullPlayerModal() {
       window.removeEventListener('resize', resize)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [isFullPlayerOpen, isPlaying])
+  }, [isFullPlayerOpen, isPlaying, currentTheme])
 
   useEffect(() => {
     function handleKeyDown(e) {
