@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { Search, Library, Radio, Disc3 } from 'lucide-react'
-
+import { Home, Search, Library, Radio, Disc3 } from 'lucide-react'
 const links = [
   { to: '/', label: 'Search', icon: Search, end: true },
+  { to: '/', label: 'Home', icon: Home, end: true },
+  { to: '/search', label: 'Search', icon: Search },
   { to: '/library', label: 'Library', icon: Library }
 ]
-
 export default function Sidebar() {
   return (
     <>
@@ -37,7 +38,6 @@ export default function Sidebar() {
           On air via JioSaavn
         </div>
       </aside>
-
       {/* Mobile bottom rail */}
       <nav className="md:hidden fixed bottom-16 left-0 right-0 z-30 bg-panel border-t border-line flex justify-around py-1.5">
         {links.map(({ to, label, icon: Icon, end }) => (
