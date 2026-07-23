@@ -5,10 +5,6 @@ const PlayerContext = createContext(null)
 
 export function PlayerProvider({ children }) {
   const audioRef = useRef(null)
-  const audioCtxRef = useRef(null)
-  const analyserRef = useRef(null)
-  const sourceRef = useRef(null)
-  const sourceReadyRef = useRef(false)
 
   const [queue, setQueue] = useState([])
   const [queueIndex, setQueueIndex] = useState(-1)
@@ -18,7 +14,6 @@ export function PlayerProvider({ children }) {
   const [volume, setVolume] = useState(0.85)
   const [shuffle, setShuffle] = useState(false)
   const [repeatMode, setRepeatMode] = useState('off') // off | all | one
-  const [analyserReady, setAnalyserReady] = useState(false)
 
   const currentTrack = queueIndex >= 0 ? queue[queueIndex] : null
 
@@ -44,29 +39,6 @@ export function PlayerProvider({ children }) {
   }, [])
 
   const handleEndedRef = useRef(null)
-
-  const setupAnalyser = useCallback(() => {
-    if (sourceReadyRef.current) return
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      if (!audioCtxRef.current) audioCtxRef.current = new AudioCtx()
-      const ctx = audioCtxRef.current
-      const source = ctx.createMediaElementSource(audioRef.current)
-      const analyser = ctx.createAnalyser()
-      analyser.fftSize = 128
-      source.connect(analyser)
-      analyser.connect(ctx.destination)
-      analyserRef.current = analyser
-      sourceRef.current = source
-      sourceReadyRef.current = true
-      setAnalyserReady(true)
-    } catch (e) {
-      // Some CDN responses don't send permissive CORS headers — playback
-      // still works, we just fall back to an ambient idle visualization.
-      console.warn('Analyser unavailable, falling back to ambient visual', e)
-      setAnalyserReady(false)
-    }
-  }, [])
 
   const loadAndPlay = useCallback(async (track) => {
     let playable = track
@@ -97,14 +69,11 @@ export function PlayerProvider({ children }) {
     setProgress(0)
     audio.play().then(() => {
       setIsPlaying(true)
-      const ctx = audioCtxRef.current
-      if (ctx && ctx.state === 'suspended') ctx.resume()
-      setupAnalyser()
     }).catch((e) => {
       console.warn('Playback failed', e)
       setIsPlaying(false)
     })
-  }, [setupAnalyser])
+  }, [])
 
   const playQueue = useCallback((tracks, startIndex = 0) => {
     setQueue(tracks)
@@ -148,8 +117,6 @@ export function PlayerProvider({ children }) {
       setIsPlaying(false)
     } else {
       audio.play().then(() => setIsPlaying(true)).catch(() => {})
-      const ctx = audioCtxRef.current
-      if (ctx && ctx.state === 'suspended') ctx.resume()
     }
   }, [isPlaying])
 
@@ -217,8 +184,6 @@ export function PlayerProvider({ children }) {
         volume,
         shuffle,
         repeatMode,
-        analyserNode: analyserRef.current,
-        analyserReady,
         setShuffle,
         setRepeatMode,
         togglePlay,
