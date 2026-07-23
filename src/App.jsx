@@ -4,11 +4,11 @@ import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import SignalDeck from './components/SignalDeck'
 import QueueDrawer from './components/QueueDrawer'
-import SearchPage from './pages/SearchPage'
-import AlbumPage from './pages/AlbumPage'
-import ArtistPage from './pages/ArtistPage'
-import PlaylistPage from './pages/PlaylistPage'
-import LibraryPage from './pages/LibraryPage'
+import SearchPage from './pages/SearchPage.jsx'
+import AlbumPage from './pages/AlbumPage.jsx'
+import ArtistPage from './pages/ArtistPage.jsx'
+import PlaylistPage from './pages/PlaylistPage.jsx'
+import LibraryPage from './pages/LibraryPage.jsx'
 
 export default function App() {
   const [queueOpen, setQueueOpen] = useState(false)
