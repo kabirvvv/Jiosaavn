@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX, ListMusic, Heart } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX, ListMusic, Heart, Maximize2 } from 'lucide-react'
 import { usePlayer } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
 import { bestImageUrl } from '../api/jiosaavn'
@@ -18,6 +18,7 @@ function Waveform({ isPlaying }) {
 
   useEffect(() => {
     const canvas = canvasRef.current
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     const dpr = window.devicePixelRatio || 1
     const width = canvas.clientWidth
@@ -30,6 +31,7 @@ function Waveform({ isPlaying }) {
     const seeds = seedsRef.current
 
     function draw() {
+      if (!canvas) return
       ctx.clearRect(0, 0, width, height)
       phaseRef.current += isPlaying ? 0.12 : 0.015
       const gap = 3
@@ -57,7 +59,8 @@ function Waveform({ isPlaying }) {
 export default function SignalDeck({ onOpenQueue }) {
   const {
     currentTrack, isPlaying, progress, duration, volume, shuffle, repeatMode,
-    togglePlay, goNext, goPrev, seek, changeVolume, setShuffle, setRepeatMode
+    togglePlay, goNext, goPrev, seek, changeVolume, setShuffle, setRepeatMode,
+    setIsFullPlayerOpen
   } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
   const [showVolume, setShowVolume] = useState(false)
@@ -101,16 +104,27 @@ export default function SignalDeck({ onOpenQueue }) {
         </div>
 
         <div className="flex items-center gap-3 md:gap-4 px-3 py-2.5">
-          <div className="flex items-center gap-3 w-1/4 min-w-0">
+          {/* Clickable Track Info to expand player */}
+          <div
+            onClick={() => setIsFullPlayerOpen(true)}
+            className="flex items-center gap-3 w-1/4 min-w-0 cursor-pointer group"
+          >
             {artwork && (
-              <img src={artwork} alt="" className="w-11 h-11 rounded object-cover flex-shrink-0 border border-line" />
+              <img
+                src={artwork}
+                alt=""
+                className="w-11 h-11 rounded object-cover flex-shrink-0 border border-line group-hover:scale-105 transition-transform"
+              />
             )}
             <div className="min-w-0 hidden sm:block">
-              <p className="text-sm font-medium truncate">{title}</p>
+              <p className="text-sm font-medium truncate group-hover:text-signal transition-colors">{title}</p>
               <p className="text-xs text-muted truncate">{subtitle}</p>
             </div>
             <button
-              onClick={() => toggleLiked({ ...currentTrack, title, subtitle })}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleLiked({ ...currentTrack, title, subtitle })
+              }}
               className={`flex-shrink-0 hidden sm:inline-flex ${liked ? 'text-signal' : 'text-muted hover:text-paper'}`}
               aria-label={liked ? 'Unlike' : 'Like'}
             >
@@ -176,6 +190,14 @@ export default function SignalDeck({ onOpenQueue }) {
             </div>
             <button onClick={onOpenQueue} className="text-muted hover:text-paper" aria-label="Queue">
               <ListMusic size={16} />
+            </button>
+            <button
+              onClick={() => setIsFullPlayerOpen(true)}
+              className="text-muted hover:text-signal p-1 transition-colors"
+              aria-label="Expand player"
+              title="Expand Full Player"
+            >
+              <Maximize2 size={16} />
             </button>
           </div>
         </div>
