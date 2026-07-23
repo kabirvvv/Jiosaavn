@@ -5,10 +5,16 @@ import { useLibrary } from '../context/LibraryContext'
 import { bestImageUrl } from '../api/jiosaavn'
 import { formatTime, artistNames, stripHtml } from '../utils/format'
 
-function Waveform({ analyserNode, analyserReady, isPlaying }) {
+// Simulated waveform, deliberately not wired to a real AnalyserNode: routing
+// the shared <audio> element through Web Audio silences playback whenever a
+// track's CDN response lacks permissive CORS headers (a hard browser
+// security behavior, not a bug we can work around) — so this trades a
+// "real" visualization for reliable audio.
+function Waveform({ isPlaying }) {
   const canvasRef = useRef(null)
   const rafRef = useRef(null)
   const phaseRef = useRef(0)
+  const seedsRef = useRef(Array.from({ length: 40 }, () => Math.random() * Math.PI * 2))
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -21,27 +27,17 @@ function Waveform({ analyserNode, analyserReady, isPlaying }) {
     ctx.scale(dpr, dpr)
 
     const bars = 40
-    const data = new Uint8Array(analyserNode ? analyserNode.frequencyBinCount : bars)
+    const seeds = seedsRef.current
 
     function draw() {
       ctx.clearRect(0, 0, width, height)
-      if (analyserReady && analyserNode) {
-        analyserNode.getByteFrequencyData(data)
-      } else {
-        phaseRef.current += isPlaying ? 0.12 : 0.02
-      }
+      phaseRef.current += isPlaying ? 0.12 : 0.015
       const gap = 3
       const barWidth = (width - gap * (bars - 1)) / bars
       for (let i = 0; i < bars; i++) {
-        let value
-        if (analyserReady && analyserNode) {
-          const idx = Math.floor((i / bars) * data.length)
-          value = data[idx] / 255
-        } else {
-          value = isPlaying
-            ? 0.3 + 0.28 * Math.abs(Math.sin(phaseRef.current + i * 0.5))
-            : 0.08
-        }
+        const value = isPlaying
+          ? 0.3 + 0.28 * Math.abs(Math.sin(phaseRef.current + seeds[i]))
+          : 0.08
         const barHeight = Math.max(2, value * height)
         const x = i * (barWidth + gap)
         const y = height - barHeight
@@ -53,7 +49,7 @@ function Waveform({ analyserNode, analyserReady, isPlaying }) {
     }
     draw()
     return () => cancelAnimationFrame(rafRef.current)
-  }, [analyserNode, analyserReady, isPlaying])
+  }, [isPlaying])
 
   return <canvas ref={canvasRef} className="w-full h-10" />
 }
@@ -61,7 +57,6 @@ function Waveform({ analyserNode, analyserReady, isPlaying }) {
 export default function SignalDeck({ onOpenQueue }) {
   const {
     currentTrack, isPlaying, progress, duration, volume, shuffle, repeatMode,
-    analyserNode, analyserReady,
     togglePlay, goNext, goPrev, seek, changeVolume, setShuffle, setRepeatMode
   } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
@@ -157,7 +152,7 @@ export default function SignalDeck({ onOpenQueue }) {
 
           <div className="w-1/4 hidden md:flex items-center justify-end gap-3">
             <div className="w-28">
-              <Waveform analyserNode={analyserNode} analyserReady={analyserReady} isPlaying={isPlaying} />
+              <Waveform isPlaying={isPlaying} />
             </div>
             <div
               className="relative flex items-center"
