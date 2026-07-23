@@ -9,6 +9,8 @@ import AlbumPage from './pages/AlbumPage.jsx'
 import ArtistPage from './pages/ArtistPage.jsx'
 import PlaylistPage from './pages/PlaylistPage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
+import HomePage from './pages/HomePage.jsx'
+import FullPlayerModal from './components/FullPlayerModal.jsx'
 
 export default function App() {
   const [queueOpen, setQueueOpen] = useState(false)
