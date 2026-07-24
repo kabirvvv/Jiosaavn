@@ -88,6 +88,16 @@ export const THEMES = {
     }
   }
 }
+// Converts "#RRGGBB" to Tailwind's expected "R G B" (space-separated, no
+// commas) format, so rgb(var(--x) / <alpha-value>) resolves correctly.
+function hexToRgbTriplet(hex) {
+  const clean = hex.replace('#', '')
+  const bigint = parseInt(clean, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+  return `${r} ${g} ${b}`
+}
 const PlayerContext = createContext(null)
 export function PlayerProvider({ children }) {
   const audioRef = useRef(null)
@@ -110,14 +120,20 @@ export function PlayerProvider({ children }) {
   const [lyrics, setLyrics] = useState(null)
   const [lyricsLoading, setLyricsLoading] = useState(false)
   // Apply Theme CSS variables
-  const changeTheme = useCallback((themeKey) => {
-    const theme = THEMES[themeKey] || THEMES.emerald
-    setCurrentTheme(themeKey)
-    const root = document.documentElement
-    Object.entries(theme.colors).forEach(([k, v]) => {
-      root.style.setProperty(k, v)
-    })
-  }, [])
+ const changeTheme = useCallback((themeKey) => {
+  const theme = THEMES[themeKey] || THEMES.emerald
+  setCurrentTheme(themeKey)
+  const root = document.documentElement
+  Object.entries(theme.colors).forEach(([k, v]) => {
+    root.style.setProperty(k, v)
+  })
+  // Derive Tailwind-consumable RGB triplets from the theme's hex colors —
+  // this is what actually makes bg-signal / text-signal / bg-signal/15
+  // etc. respond to theme changes app-wide, not just the components that
+  // read --accent-main directly via getComputedStyle.
+  root.style.setProperty('--accent-main-rgb', hexToRgbTriplet(theme.colors['--accent-main']))
+  root.style.setProperty('--accent-secondary-rgb', hexToRgbTriplet(theme.colors['--accent-secondary']))
+}, [])
   useEffect(() => {
     changeTheme(currentTheme)
   }, [currentTheme, changeTheme])
