@@ -10,7 +10,7 @@ import AlbumPage from './pages/AlbumPage.jsx'
 import ArtistPage from './pages/ArtistPage.jsx'
 import PlaylistPage from './pages/PlaylistPage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
-import NowPlayingPage from './pages/NowPlayingPage.jsx'
+import NowPlayingPage from './Pages/NowPlayingPage.jsx'
 import LyricsPage from './pages/LyricsPage.jsx'
 
 function AppShell({ children, onOpenQueue }) {
