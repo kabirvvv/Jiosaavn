@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download
+  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download, Type
 } from 'lucide-react'
-import { usePlayer, THEMES } from '../context/PlayerContext'
+import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
 import { bestImageUrl, getSongSuggestions } from '../api/jiosaavn'
 import { formatTime, artistNames, stripHtml } from '../utils/format'
@@ -30,8 +30,12 @@ export default function NowPlayingPage() {
     shuffle, repeatMode, currentTheme, eq, eqPreset, sleepTimerMinutes,
     sleepTimerRemaining, setShuffle, setRepeatMode, setTheme,
     setEq, applyEqPreset, setSleepTimerMinutes, togglePlay, goNext, goPrev, seek,
-    playNow, removeFromQueue, clearQueue, lyrics, lyricsLoading
+    playNow, removeFromQueue, clearQueue, lyrics, lyricsLoading,
+    lyricsFontFamily, lyricsFontWeight, lyricsFontSize,
+    setLyricsFontFamily, setLyricsFontWeight, setLyricsFontSize
   } = usePlayer()
+  const lyricsFontClass = LYRICS_FONTS[lyricsFontFamily]?.className || 'font-sans'
+  const lyricsWeightClass = LYRICS_WEIGHTS[lyricsFontWeight]?.className || 'font-medium'
   const { isLiked, toggleLiked } = useLibrary()
   const [showSettings, setShowSettings] = useState(false)
   const [showQueue, setShowQueue] = useState(false)
@@ -325,9 +329,10 @@ export default function NowPlayingPage() {
                 return (
                   <p
                     key={line.time ?? i}
-                    className={`text-sm preview-line-in transition-all duration-500 ease-out ${
-                      isActive ? 'text-signal font-semibold scale-105' : 'text-muted scale-100 opacity-70'
+                    className={`${lyricsFontClass} ${lyricsWeightClass} preview-line-in transition-all duration-500 ease-out ${
+                      isActive ? 'text-signal scale-105' : 'text-muted scale-100 opacity-70'
                     }`}
+                    style={{ fontSize: `${Math.round(lyricsFontSize * 0.75)}px` }}
                   >
                     {line.text || '···'}
                   </p>
@@ -335,7 +340,12 @@ export default function NowPlayingPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted text-center line-clamp-4 px-2">{lyrics.plain}</p>
+            <p
+              className={`${lyricsFontClass} ${lyricsWeightClass} text-muted text-center line-clamp-4 px-2`}
+              style={{ fontSize: `${Math.round(lyricsFontSize * 0.75)}px` }}
+            >
+              {lyrics.plain}
+            </p>
           )}
         </section>
 
@@ -480,6 +490,63 @@ export default function NowPlayingPage() {
                 max={12}
                 value={eq.high}
                 onChange={(e) => setEq((prev) => ({ ...prev, high: Number(e.target.value) }))}
+                className="w-full h-1 bg-line rounded-full accent-signal"
+              />
+            </div>
+          </div>
+          <div className="space-y-3 border-t border-line/40 pt-4">
+            <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
+              <Type size={14} className="text-signal" />
+              <span>Lyrics Style</span>
+            </h4>
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-mono text-muted uppercase tracking-wider">Font</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {Object.entries(LYRICS_FONTS).map(([key, f]) => (
+                  <button
+                    key={key}
+                    onClick={() => setLyricsFontFamily(key)}
+                    className={`py-1.5 rounded-lg text-xs transition-all ${f.className} ${
+                      lyricsFontFamily === key
+                        ? 'bg-signal text-ink font-bold'
+                        : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-mono text-muted uppercase tracking-wider">Weight</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {Object.entries(LYRICS_WEIGHTS).map(([key, w]) => (
+                  <button
+                    key={key}
+                    onClick={() => setLyricsFontWeight(key)}
+                    className={`py-1.5 rounded-lg text-[10px] transition-all ${w.className} ${
+                      lyricsFontWeight === key
+                        ? 'bg-signal text-ink font-bold'
+                        : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                    }`}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-mono text-muted uppercase tracking-wider">Size</p>
+                <span className="text-[10px] font-mono text-signal font-bold">{lyricsFontSize}px</span>
+              </div>
+              <input
+                type="range"
+                min={14}
+                max={32}
+                step={1}
+                value={lyricsFontSize}
+                onChange={(e) => setLyricsFontSize(Number(e.target.value))}
                 className="w-full h-1 bg-line rounded-full accent-signal"
               />
             </div>
