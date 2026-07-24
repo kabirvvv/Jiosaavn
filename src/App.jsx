@@ -46,6 +46,7 @@ export default function App() {
         <Route path="/library" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><LibraryPage /></AppShell>} />
         <Route path="/now-playing" element={<NowPlayingPage />} />
         <Route path="/lyrics" element={<LyricsPage />} />
+        <Route path="/recommendations/:trackId" element={<RecommendationsPage />} />
       </Routes>
       {!isFullScreenRoute && <SignalDeck onOpenQueue={() => setQueueOpen(true)} />}
       {!isFullScreenRoute && <QueueDrawer open={queueOpen} onClose={() => setQueueOpen(false)} />}
