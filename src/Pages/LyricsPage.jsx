@@ -80,18 +80,33 @@ export default function LyricsPage() {
           <div className="text-center py-24 text-muted text-sm">This track is instrumental.</div>
         ) : lyrics.synced.length ? (
           <div className="space-y-6 text-center pb-40">
-            {lyrics.synced.map((line, i) => (
-              <p
-                key={i}
-                ref={(el) => (lineRefs.current[i] = el)}
-                onClick={() => seek(line.time)}
-                className={`text-lg font-medium cursor-pointer transition-all duration-300 ${
-                  i === activeIndex ? 'text-signal scale-105' : 'text-muted hover:text-paper'
-                }`}
-              >
-                {line.text || '···'}
-              </p>
-            ))}
+            {lyrics.synced.map((line, i) => {
+              // Distance-based fade instead of a binary active/inactive swap —
+              // lines ease their opacity/scale/position as the active line
+              // moves, so a line change reads as a smooth transition rather
+              // than an instant snap.
+              const distance = Math.abs(i - activeIndex)
+              const isActive = i === activeIndex
+              const opacity = isActive ? 1 : Math.max(0.15, 1 - distance * 0.32)
+              const scale = isActive ? 1.06 : Math.max(0.92, 1 - distance * 0.03)
+              const shiftY = isActive ? 0 : (i - activeIndex) * 3
+              return (
+                <p
+                  key={i}
+                  ref={(el) => (lineRefs.current[i] = el)}
+                  onClick={() => seek(line.time)}
+                  className={`text-lg font-medium cursor-pointer transition-all duration-500 ease-out ${
+                    isActive ? 'text-signal' : 'text-muted hover:text-paper'
+                  }`}
+                  style={{
+                    opacity,
+                    transform: `translateY(${shiftY}px) scale(${scale})`
+                  }}
+                >
+                  {line.text || '···'}
+                </p>
+              )
+            })}
           </div>
         ) : (
           <p className="text-base text-paper leading-relaxed whitespace-pre-line text-center">
