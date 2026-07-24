@@ -1,16 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, ListMusic } from 'lucide-react'
+import { Search, Settings, Palette, Sliders, Moon, X } from 'lucide-react'
+import { usePlayer, THEMES } from '../context/PlayerContext'
 
 const DEBOUNCE_MS = 400
 
-export default function TopBar({ onOpenQueue }) {
+export default function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [params] = useSearchParams()
   const [value, setValue] = useState(params.get('q') || '')
   const debounceRef = useRef(null)
   const isFirstRun = useRef(true)
+  const [showSettings, setShowSettings] = useState(false)
+
+  const {
+    currentTheme, eq, eqPreset, sleepTimerMinutes, sleepTimerRemaining,
+    setTheme, setEq, applyEqPreset, setSleepTimerMinutes
+  } = usePlayer()
+  const [customTimerMin, setCustomTimerMin] = useState('')
 
   // Keep the input in sync if the URL's ?q= changes from elsewhere (e.g.
   // clicking a "View All" link on the homepage that sets its own query).
@@ -23,8 +31,6 @@ export default function TopBar({ onOpenQueue }) {
   // a new history entry — back/forward stays clean, one step per "session"
   // of typing rather than per character.
   useEffect(() => {
-    // Skip firing on mount so we don't immediately re-navigate on page load
-    // just because the input was initialized from the current ?q=.
     if (isFirstRun.current) {
       isFirstRun.current = false
       return
@@ -35,8 +41,6 @@ export default function TopBar({ onOpenQueue }) {
       if (trimmed) {
         navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
       } else if (location.pathname === '/search') {
-        // Clearing the box while on the search page drops back to its
-        // empty state, rather than leaving a stale query in the URL.
         navigate('/search', { replace: true })
       }
     }, DEBOUNCE_MS)
@@ -46,8 +50,6 @@ export default function TopBar({ onOpenQueue }) {
 
   const submit = (e) => {
     e.preventDefault()
-    // Manual submit (enter key) bypasses the debounce and navigates
-    // immediately — also useful as a fallback if JS timing ever misses.
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const trimmed = value.trim()
     if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
@@ -68,13 +70,169 @@ export default function TopBar({ onOpenQueue }) {
           </div>
         </form>
         <button
-          onClick={onOpenQueue}
-          className="md:hidden text-muted hover:text-paper flex-shrink-0"
-          aria-label="Open queue"
+          onClick={() => setShowSettings(true)}
+          className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
+          aria-label="Settings"
         >
-          <ListMusic size={20} />
+          <Settings size={20} />
         </button>
       </div>
+
+      {showSettings && (
+        <>
+          <div
+            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowSettings(false)}
+          />
+          <aside className="fixed top-0 right-0 z-40 h-full w-full sm:w-80 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-line/40 pb-3">
+              <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
+                <Sliders className="text-signal" size={18} />
+                <span>Audio & Vibe Engine</span>
+              </h3>
+              <button onClick={() => setShowSettings(false)} className="text-muted hover:text-paper">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
+                <Palette size={14} className="text-signal" />
+                <span>App Theme</span>
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(THEMES).map(([key, t]) => (
+                  <button
+                    key={key}
+                    onClick={() => setTheme(key)}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      currentTheme === key
+                        ? 'border-signal bg-signal/15 text-paper font-semibold shadow-md'
+                        : 'border-line/40 bg-panel/50 text-muted hover:text-paper hover:bg-panel'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0"
+                        style={{ backgroundColor: t.colors['--accent-main'] }}
+                      />
+                      <span className="text-xs font-bold truncate">{t.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t border-line/40 pt-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <Sliders size={14} className="text-signal" />
+                  <span>Equalizer</span>
+                </h4>
+                <span className="text-[10px] font-mono text-signal uppercase">{eqPreset}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {['flat', 'bass', 'pop', 'chill'].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => applyEqPreset(p)}
+                    className={`py-1 rounded-md text-[10px] font-mono capitalize transition-all ${
+                      eqPreset === p ? 'bg-signal text-ink font-bold' : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2 pt-1 text-xs font-mono text-muted">
+                <div className="flex items-center justify-between">
+                  <span>Low Bass</span>
+                  <span className="text-paper">{eq.low} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min={-12}
+                  max={12}
+                  value={eq.low}
+                  onChange={(e) => setEq((prev) => ({ ...prev, low: Number(e.target.value) }))}
+                  className="w-full h-1 bg-line rounded-full accent-signal"
+                />
+                <div className="flex items-center justify-between">
+                  <span>Mids</span>
+                  <span className="text-paper">{eq.mid} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min={-12}
+                  max={12}
+                  value={eq.mid}
+                  onChange={(e) => setEq((prev) => ({ ...prev, mid: Number(e.target.value) }))}
+                  className="w-full h-1 bg-line rounded-full accent-signal"
+                />
+                <div className="flex items-center justify-between">
+                  <span>High Treble</span>
+                  <span className="text-paper">{eq.high} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min={-12}
+                  max={12}
+                  value={eq.high}
+                  onChange={(e) => setEq((prev) => ({ ...prev, high: Number(e.target.value) }))}
+                  className="w-full h-1 bg-line rounded-full accent-signal"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t border-line/40 pt-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <Moon size={14} className="text-signal" />
+                  <span>Sleep Timer</span>
+                </h4>
+                {sleepTimerRemaining > 0 && (
+                  <span className="text-[10px] font-mono text-signal font-bold">
+                    {Math.floor(sleepTimerRemaining / 60)}m {sleepTimerRemaining % 60}s
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-5 gap-1">
+                {[0, 15, 30, 60, 120].map((mins) => (
+                  <button
+                    key={mins}
+                    onClick={() => setSleepTimerMinutes(mins)}
+                    className={`py-1.5 rounded-lg text-[10px] font-mono transition-all ${
+                      sleepTimerMinutes === mins
+                        ? 'bg-signal text-ink font-bold'
+                        : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                    }`}
+                  >
+                    {mins === 0 ? 'Off' : `${mins}m`}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="number"
+                  placeholder="Custom Mins"
+                  value={customTimerMin}
+                  onChange={(e) => setCustomTimerMin(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg bg-panel border border-line text-xs outline-none focus:border-signal"
+                />
+                <button
+                  onClick={() => {
+                    const m = parseInt(customTimerMin, 10)
+                    if (m > 0) setSleepTimerMinutes(m)
+                  }}
+                  className="px-4 py-1.5 rounded-lg bg-signal text-ink text-xs font-bold hover:bg-signal2"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </aside>
+        </>
+      )}
     </div>
   )
 }
