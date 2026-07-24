@@ -1,15 +1,56 @@
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Search, ListMusic } from 'lucide-react'
+
+const DEBOUNCE_MS = 400
 
 export default function TopBar({ onOpenQueue }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [params] = useSearchParams()
   const [value, setValue] = useState(params.get('q') || '')
+  const debounceRef = useRef(null)
+  const isFirstRun = useRef(true)
+
+  // Keep the input in sync if the URL's ?q= changes from elsewhere (e.g.
+  // clicking a "View All" link on the homepage that sets its own query).
+  useEffect(() => {
+    setValue(params.get('q') || '')
+  }, [params])
+
+  // Live search-as-you-type: debounce keystrokes, then navigate to /search
+  // with the query. Uses { replace: true } so every keystroke doesn't push
+  // a new history entry — back/forward stays clean, one step per "session"
+  // of typing rather than per character.
+  useEffect(() => {
+    // Skip firing on mount so we don't immediately re-navigate on page load
+    // just because the input was initialized from the current ?q=.
+    if (isFirstRun.current) {
+      isFirstRun.current = false
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = value.trim()
+    debounceRef.current = setTimeout(() => {
+      if (trimmed) {
+        navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
+      } else if (location.pathname === '/search') {
+        // Clearing the box while on the search page drops back to its
+        // empty state, rather than leaving a stale query in the URL.
+        navigate('/search', { replace: true })
+      }
+    }, DEBOUNCE_MS)
+    return () => clearTimeout(debounceRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
 
   const submit = (e) => {
     e.preventDefault()
-    if (value.trim()) navigate(`/search?q=${encodeURIComponent(value.trim())}`)
+    // Manual submit (enter key) bypasses the debounce and navigates
+    // immediately — also useful as a fallback if JS timing ever misses.
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = value.trim()
+    if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
   }
 
   return (
