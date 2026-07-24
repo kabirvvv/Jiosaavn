@@ -11,7 +11,7 @@ import ArtistPage from './pages/ArtistPage.jsx'
 import PlaylistPage from './pages/PlaylistPage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
 import NowPlayingPage from './Pages/NowPlayingPage.jsx'
-import LyricsPage from './pages/LyricsPage.jsx'
+import LyricsPage from './Pages/LyricsPage.jsx'
 
 function AppShell({ children, onOpenQueue }) {
   return (
