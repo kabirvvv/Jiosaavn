@@ -83,3 +83,25 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 50%;
   background: #FF5C35;
 }
+input[type='range'].theme-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--accent-main, #FF5C35);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+input[type='range'].theme-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--accent-main, #FF5C35);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
