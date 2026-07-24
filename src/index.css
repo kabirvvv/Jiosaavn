@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --accent-main-rgb: 0 255 162;
+  --accent-secondary-rgb: 0 210 255;
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: #332C22 transparent;
