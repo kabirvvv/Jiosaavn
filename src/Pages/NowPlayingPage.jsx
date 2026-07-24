@@ -324,8 +324,10 @@ export default function NowPlayingPage() {
                 const isActive = lyrics.synced[activeLyricIndex]?.time === line.time
                 return (
                   <p
-                    key={i}
-                    className={`text-sm transition-colors ${isActive ? 'text-signal font-semibold' : 'text-muted'}`}
+                    key={line.time ?? i}
+                    className={`text-sm preview-line-in transition-all duration-500 ease-out ${
+                      isActive ? 'text-signal font-semibold scale-105' : 'text-muted scale-100 opacity-70'
+                    }`}
                   >
                     {line.text || '···'}
                   </p>
