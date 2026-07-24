@@ -168,11 +168,7 @@ export default function NowPlayingPage() {
                 isPlaying ? 'scale-105' : 'scale-100'
               }`}
             />
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-chassis/80 border border-line/60 backdrop-blur-md text-[10px] font-mono text-signal font-bold">
-              <span>320 KBPS</span>
-              <span>•</span>
-              <span>HD AUDIO</span>
-            </div>
+          
           </div>
           <div className="text-center space-y-1.5 w-full">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-paper truncate px-2">{title}</h2>
@@ -192,7 +188,7 @@ export default function NowPlayingPage() {
               max={duration || 0}
               value={progress}
               onChange={(e) => seek(Number(e.target.value))}
-              className="w-full h-2 bg-line rounded-full accent-signal cursor-pointer"
+              className="theme-seek w-full h-2 bg-line rounded-full cursor-pointer"
               style={{
                 background: `linear-gradient(to right, var(--accent-main, #00ff88) ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) 0)`
               }}
@@ -240,18 +236,7 @@ export default function NowPlayingPage() {
               <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
               <span>{liked ? 'Liked' : 'Like'}</span>
             </button>
-            <div className="flex items-center gap-3 w-40">
-              <VolIcon size={18} className="text-muted shrink-0" />
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={volume}
-                onChange={(e) => changeVolume(Number(e.target.value))}
-                className="w-full h-1.5 bg-line rounded-full accent-signal"
-              />
-            </div>
+           
           </div>
         </div>
 
