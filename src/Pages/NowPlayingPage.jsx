@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX,
-  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2
+  Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
+  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download
 } from 'lucide-react'
 import { usePlayer, THEMES } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
@@ -12,11 +12,11 @@ import { formatTime, artistNames, stripHtml } from '../utils/format'
 export default function NowPlayingPage() {
   const navigate = useNavigate()
   const {
-    currentTrack, queue, queueIndex, isPlaying, progress, duration, volume,
+    currentTrack, queue, queueIndex, isPlaying, progress, duration,
     shuffle, repeatMode, currentTheme, eq, eqPreset, sleepTimerMinutes,
     sleepTimerRemaining, setShuffle, setRepeatMode, setTheme,
     setEq, applyEqPreset, setSleepTimerMinutes, togglePlay, goNext, goPrev, seek,
-    changeVolume, playNow, removeFromQueue, clearQueue, lyrics, lyricsLoading
+    playNow, removeFromQueue, clearQueue, lyrics, lyricsLoading
   } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
   const [showSettings, setShowSettings] = useState(false)
@@ -25,7 +25,6 @@ export default function NowPlayingPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const canvasRef = useRef(null)
   const rafRef = useRef(null)
-  const phaseRef = useRef(0)
 
   useEffect(() => {
     if (!currentTrack?.id) return
@@ -56,33 +55,52 @@ export default function NowPlayingPage() {
     }
     resize()
     window.addEventListener('resize', resize)
-    const bars = 60
-    const seeds = Array.from({ length: bars }, () => Math.random() * Math.PI * 2)
-    function render() {
+
+    const bars = 48
+    // Each bar eases toward a target height that gets reshuffled on a
+    // semi-randomized "beat" interval, instead of every bar moving in
+    // mechanical lockstep on a single sine wave. Reads as rhythmic and
+    // alive without needing real audio-frequency analysis (which is
+    // intentionally avoided here — see Web Audio API CORS gotcha).
+    const current = new Array(bars).fill(0.1)
+    const targets = new Array(bars).fill(0.1)
+    let lastBeatTime = 0
+    let beatInterval = 380 + Math.random() * 260
+
+    function render(timestamp) {
       if (!canvas) return
       const width = canvas.width / dpr
       const height = canvas.height / dpr
       ctx.clearRect(0, 0, width, height)
-      phaseRef.current += isPlaying ? 0.08 : 0.01
+
+      if (isPlaying && timestamp - lastBeatTime > beatInterval) {
+        lastBeatTime = timestamp
+        beatInterval = 320 + Math.random() * 280
+        for (let i = 0; i < bars; i++) {
+          const wave = Math.sin((i / bars) * Math.PI * 2 + timestamp * 0.0006)
+          targets[i] = 0.25 + Math.random() * 0.55 + Math.max(0, wave) * 0.3
+        }
+      }
+
       const barWidth = width / bars
       const centerY = height / 2
       for (let i = 0; i < bars; i++) {
-        const amp = isPlaying
-          ? 0.35 + 0.5 * Math.abs(Math.sin(phaseRef.current * 1.5 + seeds[i]))
-          : 0.08
-        const h = amp * (height * 0.45)
+        const easing = isPlaying ? 0.12 : 0.04
+        const target = isPlaying ? targets[i] : 0.08
+        current[i] += (target - current[i]) * easing
+        const h = current[i] * (height * 0.5)
         const x = i * barWidth
         const y = centerY - h / 2
         const gradient = ctx.createLinearGradient(0, y, 0, y + h)
         gradient.addColorStop(0, colorMain)
         gradient.addColorStop(1, colorSecondary)
         ctx.fillStyle = gradient
-        ctx.globalAlpha = isPlaying ? 0.75 : 0.25
+        ctx.globalAlpha = isPlaying ? 0.8 : 0.25
         ctx.fillRect(x, y, barWidth - 2, Math.max(3, h))
       }
       rafRef.current = requestAnimationFrame(render)
     }
-    render()
+    rafRef.current = requestAnimationFrame(render)
     return () => {
       window.removeEventListener('resize', resize)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
@@ -115,7 +133,6 @@ export default function NowPlayingPage() {
   const title = stripHtml(currentTrack.title || currentTrack.name || '')
   const subtitle = artistNames(currentTrack)
   const liked = isLiked(currentTrack.id)
-  const VolIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
   const RepeatIcon = repeatMode === 'one' ? Repeat1 : Repeat
 
   const activeLyricIndex = lyrics?.synced?.length
@@ -168,14 +185,31 @@ export default function NowPlayingPage() {
                 isPlaying ? 'scale-105' : 'scale-100'
               }`}
             />
-          
           </div>
           <div className="text-center space-y-1.5 w-full">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-paper truncate px-2">{title}</h2>
             <p className="text-sm sm:text-base text-muted truncate px-2 font-medium">{subtitle}</p>
           </div>
-          <div className="w-full h-16 relative overflow-hidden rounded-xl bg-panel/30 border border-line/20">
-            <canvas ref={canvasRef} className="w-full h-full" />
+          <div className="w-full flex items-center gap-3">
+            <button
+              onClick={() => {/* TODO: wire up download */}}
+              className="w-11 h-11 shrink-0 rounded-full border border-line bg-panel/60 text-muted hover:text-signal hover:border-signal transition-all flex items-center justify-center"
+              aria-label="Download"
+            >
+              <Download size={18} />
+            </button>
+            <div className="flex-1 h-16 relative overflow-hidden rounded-xl bg-panel/30 border border-line/20">
+              <canvas ref={canvasRef} className="w-full h-full" />
+            </div>
+            <button
+              onClick={() => toggleLiked({ ...currentTrack, title, subtitle })}
+              className={`w-11 h-11 shrink-0 rounded-full border transition-all flex items-center justify-center ${
+                liked ? 'text-signal border-signal bg-signal/10' : 'text-muted border-line bg-panel/60 hover:text-paper'
+              }`}
+              aria-label="Like"
+            >
+              <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+            </button>
           </div>
           <div className="w-full space-y-2">
             <div className="flex justify-between text-xs font-mono text-muted">
@@ -225,18 +259,6 @@ export default function NowPlayingPage() {
                 <span className="absolute -bottom-1 -right-1 bg-signal text-ink text-[9px] font-bold px-1 rounded">1</span>
               )}
             </button>
-          </div>
-          <div className="flex items-center justify-between w-full max-w-sm px-4">
-            <button
-              onClick={() => toggleLiked({ ...currentTrack, title, subtitle })}
-              className={`p-2 flex items-center gap-2 text-xs font-semibold transition-colors ${
-                liked ? 'text-signal' : 'text-muted hover:text-paper'
-              }`}
-            >
-              <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
-              <span>{liked ? 'Liked' : 'Like'}</span>
-            </button>
-           
           </div>
         </div>
 
