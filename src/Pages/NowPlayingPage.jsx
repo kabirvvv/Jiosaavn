@@ -9,6 +9,20 @@ import { useLibrary } from '../context/LibraryContext'
 import { bestImageUrl, getSongSuggestions } from '../api/jiosaavn'
 import { formatTime, artistNames, stripHtml } from '../utils/format'
 
+// Renders the repeat/shuffle icon for the merged repeat+shuffle button.
+// Keying the wrapper span by `mode` forces a remount whenever the mode
+// changes, which replays the CSS morph-in animation (see .repeat-shuffle-
+// icon-enter in index.css) — this is what makes it read as the repeat
+// lines "turning into" the shuffle icon rather than an instant swap.
+function RepeatShuffleIcon({ mode }) {
+  const Icon = mode === 'shuffle' ? Shuffle : mode === 'one' ? Repeat1 : Repeat
+  return (
+    <span key={mode} className="repeat-shuffle-icon-enter inline-flex">
+      <Icon size={20} />
+    </span>
+  )
+}
+
 export default function NowPlayingPage() {
   const navigate = useNavigate()
   const {
@@ -20,6 +34,7 @@ export default function NowPlayingPage() {
   } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
   const [showSettings, setShowSettings] = useState(false)
+  const [showQueue, setShowQueue] = useState(false)
   const [customTimerMin, setCustomTimerMin] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
@@ -133,7 +148,23 @@ export default function NowPlayingPage() {
   const title = stripHtml(currentTrack.title || currentTrack.name || '')
   const subtitle = artistNames(currentTrack)
   const liked = isLiked(currentTrack.id)
-  const RepeatIcon = repeatMode === 'one' ? Repeat1 : Repeat
+  // Unified playback mode drives both the icon and the click-cycle now that
+  // shuffle's function has moved into the repeat button: off -> one -> all -> shuffle -> off
+  const playbackMode = shuffle ? 'shuffle' : repeatMode
+  const cyclePlaybackMode = () => {
+    if (shuffle) {
+      setShuffle(false)
+      setRepeatMode('off')
+    } else if (repeatMode === 'off') {
+      setRepeatMode('one')
+    } else if (repeatMode === 'one') {
+      setRepeatMode('all')
+    } else {
+      // was 'all' -> move into shuffle
+      setRepeatMode('off')
+      setShuffle(true)
+    }
+  }
 
   const activeLyricIndex = lyrics?.synced?.length
     ? lyrics.synced.reduce((acc, line, i) => (line.time <= progress ? i : acc), -1)
@@ -230,11 +261,11 @@ export default function NowPlayingPage() {
           </div>
           <div className="flex items-center justify-between w-full max-w-sm px-2">
             <button
-              onClick={() => setShuffle(!shuffle)}
-              className={`p-2 transition-colors ${shuffle ? 'text-signal' : 'text-muted hover:text-paper'}`}
-              aria-label="Shuffle"
+              onClick={() => setShowQueue(true)}
+              className="p-2 text-muted hover:text-paper transition-colors"
+              aria-label="Queue"
             >
-              <Shuffle size={20} />
+              <ListMusic size={20} />
             </button>
             <button onClick={goPrev} className="p-2 text-paper hover:text-signal transition-colors" aria-label="Previous">
               <SkipBack size={26} fill="currentColor" />
@@ -250,78 +281,20 @@ export default function NowPlayingPage() {
               <SkipForward size={26} fill="currentColor" />
             </button>
             <button
-              onClick={() => setRepeatMode(repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off')}
-              className={`p-2 relative transition-colors ${repeatMode !== 'off' ? 'text-signal' : 'text-muted hover:text-paper'}`}
-              aria-label="Repeat"
+              onClick={cyclePlaybackMode}
+              className={`p-2 relative transition-colors ${playbackMode !== 'off' ? 'text-signal' : 'text-muted hover:text-paper'}`}
+              aria-label="Repeat / Shuffle"
             >
-              <RepeatIcon size={20} />
-              {repeatMode === 'one' && (
+              <RepeatShuffleIcon mode={playbackMode} />
+              {playbackMode === 'one' && (
                 <span className="absolute -bottom-1 -right-1 bg-signal text-ink text-[9px] font-bold px-1 rounded">1</span>
+              )}
+              {playbackMode === 'all' && (
+                <span className="absolute -bottom-1 -right-1 bg-signal text-ink text-[9px] font-bold px-1 rounded">A</span>
               )}
             </button>
           </div>
         </div>
-
-        {/* Queue — directly below the seekbar/transport controls */}
-        <section className="bg-panel/40 border border-line/40 rounded-2xl p-5 backdrop-blur-md">
-          <div className="flex items-center justify-between mb-4 border-b border-line/40 pb-3">
-            <div>
-              <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
-                <ListMusic size={16} className="text-signal" />
-                <span>Up Next</span>
-              </h3>
-              <p className="text-xs text-muted font-mono">{queue.length} tracks in sequence</p>
-            </div>
-            <button
-              onClick={clearQueue}
-              className="px-3 py-1.5 rounded-lg border border-line bg-panel text-xs text-muted hover:text-signal hover:border-signal transition-colors flex items-center gap-1.5"
-            >
-              <Trash2 size={14} />
-              <span>Clear</span>
-            </button>
-          </div>
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-            {queue.length === 0 ? (
-              <p className="text-center py-6 text-xs text-muted">Queue is empty.</p>
-            ) : (
-              queue.map((track, idx) => {
-                const isCurr = idx === queueIndex
-                const art = bestImageUrl(track.image)
-                const trTitle = stripHtml(track.title || track.name || '')
-                const trArtist = artistNames(track)
-                return (
-                  <div
-                    key={`${track.id}-${idx}`}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                      isCurr
-                        ? 'bg-signal/15 border-signal/40 text-signal font-semibold'
-                        : 'bg-panel/60 border-line/30 text-paper hover:bg-panel'
-                    }`}
-                  >
-                    <div
-                      onClick={() => playNow(track, queue)}
-                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                    >
-                      <span className="w-6 text-xs font-mono text-muted text-center">{idx + 1}</span>
-                      {art && <img src={art} alt="" className="w-10 h-10 rounded object-cover shrink-0 border border-line/30" />}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm truncate">{trTitle}</p>
-                        <p className="text-xs text-muted truncate">{trArtist}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFromQueue(idx)}
-                      className="p-2 text-muted hover:text-signal transition-colors"
-                      aria-label="Remove from queue"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </section>
 
         {/* Lyrics — auto-loaded preview, Expand opens the dedicated page */}
         <section className="bg-panel/40 border border-line/40 rounded-2xl p-5 backdrop-blur-md">
@@ -554,6 +527,73 @@ export default function NowPlayingPage() {
                 Set
               </button>
             </div>
+          </div>
+        </aside>
+      )}
+
+      {showQueue && (
+        <aside className="fixed top-0 right-0 z-30 h-full w-full sm:w-96 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-4 backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-line/40 pb-3">
+            <div>
+              <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
+                <ListMusic size={18} className="text-signal" />
+                <span>Up Next</span>
+              </h3>
+              <p className="text-xs text-muted font-mono">{queue.length} tracks in sequence</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearQueue}
+                className="px-3 py-1.5 rounded-lg border border-line bg-panel text-xs text-muted hover:text-signal hover:border-signal transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 size={14} />
+                <span>Clear</span>
+              </button>
+              <button onClick={() => setShowQueue(false)} className="text-muted hover:text-paper">
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {queue.length === 0 ? (
+              <p className="text-center py-6 text-xs text-muted">Queue is empty.</p>
+            ) : (
+              queue.map((track, idx) => {
+                const isCurr = idx === queueIndex
+                const art = bestImageUrl(track.image)
+                const trTitle = stripHtml(track.title || track.name || '')
+                const trArtist = artistNames(track)
+                return (
+                  <div
+                    key={`${track.id}-${idx}`}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isCurr
+                        ? 'bg-signal/15 border-signal/40 text-signal font-semibold'
+                        : 'bg-panel/60 border-line/30 text-paper hover:bg-panel'
+                    }`}
+                  >
+                    <div
+                      onClick={() => playNow(track, queue)}
+                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                    >
+                      <span className="w-6 text-xs font-mono text-muted text-center">{idx + 1}</span>
+                      {art && <img src={art} alt="" className="w-10 h-10 rounded object-cover shrink-0 border border-line/30" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm truncate">{trTitle}</p>
+                        <p className="text-xs text-muted truncate">{trArtist}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeFromQueue(idx)}
+                      className="p-2 text-muted hover:text-signal transition-colors"
+                      aria-label="Remove from queue"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )
+              })
+            )}
           </div>
         </aside>
       )}
