@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, Volume1, VolumeX, ListMusic, Heart, Maximize2 } from 'lucide-react'
 import { usePlayer } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
@@ -59,11 +60,11 @@ function Waveform({ isPlaying }) {
 export default function SignalDeck({ onOpenQueue }) {
   const {
     currentTrack, isPlaying, progress, duration, volume, shuffle, repeatMode,
-    togglePlay, goNext, goPrev, seek, changeVolume, setShuffle, setRepeatMode,
-    setIsFullPlayerOpen
+    togglePlay, goNext, goPrev, seek, changeVolume, setShuffle, setRepeatMode
   } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
   const [showVolume, setShowVolume] = useState(false)
+  const navigate = useNavigate()
 
   if (!currentTrack) {
     return (
@@ -106,7 +107,7 @@ export default function SignalDeck({ onOpenQueue }) {
         <div className="flex items-center gap-3 md:gap-4 px-3 py-2.5">
           {/* Clickable Track Info to expand player */}
           <div
-            onClick={() => setIsFullPlayerOpen(true)}
+            onClick={() => navigate('/now-playing')}
             className="flex items-center gap-3 w-1/4 min-w-0 cursor-pointer group"
           >
             {artwork && (
@@ -192,7 +193,7 @@ export default function SignalDeck({ onOpenQueue }) {
               <ListMusic size={16} />
             </button>
             <button
-              onClick={() => setIsFullPlayerOpen(true)}
+              onClick={() => navigate('/now-playing')}
               className="text-muted hover:text-signal p-1 transition-colors"
               aria-label="Expand player"
               title="Expand Full Player"
