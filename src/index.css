@@ -153,3 +153,70 @@ input[type='range'].theme-seek::-moz-range-thumb {
 .repeat-shuffle-icon-enter {
   animation: repeat-morph-in 0.35s ease-out;
 }
+/* Theme-colored seekbar thumb — add to src/index.css.
+   The track fill already reads var(--accent-main) via inline style, but the
+   thumb had no styling at all (browser default), so it never visually
+   responded to theme changes. This makes it follow the active theme. */
+input[type='range'].theme-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--accent-main, #FF5C35);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+input[type='range'].theme-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--accent-main, #FF5C35);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+/* Repeat -> Shuffle icon morph — plays whenever the merged repeat/shuffle
+   button's mode changes. RepeatShuffleIcon remounts its wrapper span (keyed
+   by mode), which replays this animation each time. */
+@keyframes repeat-morph-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(12deg) scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.repeat-shuffle-icon-enter {
+  animation: repeat-morph-in 0.35s ease-out;
+}
+
+/* Now Playing lyrics preview strip — plays when a new line enters the
+   3-line window (keyed by line.time, so only genuinely new lines remount
+   and animate; continuing lines just ease their color/scale via the
+   transition-all already on the element). */
+@keyframes preview-line-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-line-in {
+  animation: preview-line-in 0.4s ease-out;
+}
