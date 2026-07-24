@@ -98,6 +98,20 @@ function hexToRgbTriplet(hex) {
   const b = bigint & 255
   return `${r} ${g} ${b}`
 }
+// Font family options for the Lyrics Style setting, reusing the three
+// fonts already established in the app's design system rather than
+// introducing new ones.
+export const LYRICS_FONTS = {
+  sans: { label: 'Inter', className: 'font-sans' },
+  display: { label: 'Bricolage', className: 'font-display' },
+  mono: { label: 'Mono', className: 'font-mono' }
+}
+export const LYRICS_WEIGHTS = {
+  normal: { label: 'Regular', className: 'font-normal' },
+  medium: { label: 'Medium', className: 'font-medium' },
+  semibold: { label: 'Semibold', className: 'font-semibold' },
+  bold: { label: 'Bold', className: 'font-bold' }
+}
 const PlayerContext = createContext(null)
 export function PlayerProvider({ children }) {
   const audioRef = useRef(null)
@@ -116,6 +130,12 @@ export function PlayerProvider({ children }) {
   const [eqPreset, setEqPreset] = useState('flat')
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(0)
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0)
+  // Lyrics Style settings — applied on both the Now Playing preview and the
+  // full Lyrics page. fontSize is in px; a sensible default matches the
+  // previous fixed text-lg (~18px) main-page size.
+  const [lyricsFontFamily, setLyricsFontFamily] = useState('sans')
+  const [lyricsFontWeight, setLyricsFontWeight] = useState('medium')
+  const [lyricsFontSize, setLyricsFontSize] = useState(18)
   const currentTrack = queueIndex >= 0 ? queue[queueIndex] : null
   const [lyrics, setLyrics] = useState(null)
   const [lyricsLoading, setLyricsLoading] = useState(false)
@@ -369,6 +389,9 @@ export function PlayerProvider({ children }) {
         sleepTimerRemaining,
         lyrics,
         lyricsLoading,
+        lyricsFontFamily,
+        lyricsFontWeight,
+        lyricsFontSize,
         setIsFullPlayerOpen,
         setShuffle,
         setRepeatMode,
@@ -376,6 +399,9 @@ export function PlayerProvider({ children }) {
         setEq,
         applyEqPreset,
         setSleepTimerMinutes,
+        setLyricsFontFamily,
+        setLyricsFontWeight,
+        setLyricsFontSize,
         togglePlay,
         goNext,
         goPrev,
