@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Search, Settings, Palette, Sliders, Moon, X } from 'lucide-react'
 import { usePlayer, THEMES } from '../context/PlayerContext'
@@ -62,6 +63,8 @@ export default function TopBar() {
           <div className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2 focus-within:border-signal transition-colors">
             <Search size={16} className="text-muted flex-shrink-0" />
             <input
+              name="signal-deck-search"
+              id="signal-deck-search"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="Search tracks, albums, artists, playlists"
@@ -78,13 +81,22 @@ export default function TopBar() {
         </button>
       </div>
 
-      {showSettings && (
+      {/* Rendered via portal directly to document.body — this panel must
+          NOT be a DOM descendant of this component's root div. That root
+          div has `backdrop-blur` (backdrop-filter), which per the CSS spec
+          establishes a containing block for any `position: fixed`
+          descendant. Without the portal, the "fixed" backdrop/aside below
+          would anchor to THIS div's small height (~60px) instead of the
+          full viewport — meaning `h-full` resolves to "100% of the topbar",
+          clipping everything except the header out of view even though
+          it's correctly present in the DOM. */}
+      {showSettings && createPortal(
         <>
           <div
-            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={() => setShowSettings(false)}
           />
-          <aside className="fixed top-0 right-0 z-40 h-full w-full sm:w-80 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
+          <aside className="fixed top-0 right-0 z-[110] h-screen w-full sm:w-80 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-line/40 pb-3">
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
                 <Sliders className="text-signal" size={18} />
@@ -231,7 +243,8 @@ export default function TopBar() {
               </div>
             </div>
           </aside>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )
