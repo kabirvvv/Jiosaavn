@@ -1,14 +1,19 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Music } from 'lucide-react'
-import { usePlayer } from '../context/PlayerContext'
+import { usePlayer, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { bestImageUrl } from '../api/jiosaavn'
 import { artistNames, stripHtml } from '../utils/format'
 
 export default function LyricsPage() {
   const navigate = useNavigate()
-  const { currentTrack, progress, lyrics, lyricsLoading, seek } = usePlayer()
+  const {
+    currentTrack, progress, lyrics, lyricsLoading, seek,
+    lyricsFontFamily, lyricsFontWeight, lyricsFontSize
+  } = usePlayer()
   const lineRefs = useRef([])
+  const fontClass = LYRICS_FONTS[lyricsFontFamily]?.className || 'font-sans'
+  const weightClass = LYRICS_WEIGHTS[lyricsFontWeight]?.className || 'font-medium'
 
   const activeIndex = lyrics?.synced?.length
     ? lyrics.synced.reduce((acc, line, i) => (line.time <= progress ? i : acc), -1)
@@ -95,11 +100,12 @@ export default function LyricsPage() {
                   key={i}
                   ref={(el) => (lineRefs.current[i] = el)}
                   onClick={() => seek(line.time)}
-                  className={`text-lg font-medium cursor-pointer transition-all duration-500 ease-out ${
+                  className={`${fontClass} ${weightClass} cursor-pointer transition-all duration-500 ease-out ${
                     isActive ? 'text-signal' : 'text-muted hover:text-paper'
                   }`}
                   style={{
                     opacity,
+                    fontSize: `${lyricsFontSize}px`,
                     transform: `translateY(${shiftY}px) scale(${scale})`
                   }}
                 >
@@ -109,7 +115,10 @@ export default function LyricsPage() {
             })}
           </div>
         ) : (
-          <p className="text-base text-paper leading-relaxed whitespace-pre-line text-center">
+          <p
+            className={`${fontClass} ${weightClass} text-paper leading-relaxed whitespace-pre-line text-center`}
+            style={{ fontSize: `${lyricsFontSize}px` }}
+          >
             {lyrics.plain}
           </p>
         )}
