@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download, Type
+  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download, Type, ArrowRight
 } from 'lucide-react'
 import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
@@ -349,26 +349,36 @@ export default function NowPlayingPage() {
           )}
         </section>
 
-        {/* Recommended — kept for parity, no longer tabbed */}
+        {/* Recommended — single-row strip of the currently loaded suggestions;
+            View All opens the dedicated Recommendations page which fetches more. */}
         <section className="bg-panel/40 border border-line/40 rounded-2xl p-5 backdrop-blur-md">
-          <div className="mb-4 border-b border-line/40 pb-3">
+          <div className="mb-4 border-b border-line/40 pb-3 flex items-center justify-between">
             <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
               <Sparkles className="text-signal" size={16} />
               <span>Recommended</span>
             </h3>
+            <button
+              onClick={() => navigate(`/recommendations/${currentTrack.id}`)}
+              className="px-3 py-1.5 rounded-lg border border-line bg-panel text-xs text-muted hover:text-signal hover:border-signal transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <span>View All</span>
+              <ArrowRight size={14} />
+            </button>
           </div>
-          <div className="space-y-2">
-            {loadingSuggestions ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-panel animate-pulse border border-line" />
-              ))
-            ) : suggestions.length === 0 ? (
-              <div className="text-center py-8 text-muted text-sm">
-                <Music size={28} className="mx-auto mb-2 opacity-40" />
-                <p>No extra suggestions found for this song.</p>
-              </div>
-            ) : (
-              suggestions.map((track) => {
+          {loadingSuggestions ? (
+            <div className="flex gap-3 overflow-x-hidden">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-32 h-44 rounded-xl bg-panel animate-pulse border border-line shrink-0" />
+              ))}
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="text-center py-8 text-muted text-sm">
+              <Music size={28} className="mx-auto mb-2 opacity-40" />
+              <p>No extra suggestions found for this song.</p>
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+              {suggestions.map((track) => {
                 const art = bestImageUrl(track.image)
                 const trTitle = stripHtml(track.title || track.name || '')
                 const trArtist = artistNames(track)
@@ -376,23 +386,23 @@ export default function NowPlayingPage() {
                   <div
                     key={track.id}
                     onClick={() => playNow(track)}
-                    className="flex items-center justify-between p-3 rounded-xl bg-panel/60 border border-line/30 hover:bg-panel hover:border-signal/40 cursor-pointer transition-all group"
+                    className="w-32 shrink-0 snap-start cursor-pointer group rounded-xl border border-line/30 bg-panel/60 p-2.5 hover:border-signal hover:bg-panel transition-all"
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {art && <img src={art} alt="" className="w-11 h-11 rounded object-cover shrink-0 border border-line/30" />}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-paper group-hover:text-signal truncate">{trTitle}</p>
-                        <p className="text-xs text-muted truncate">{trArtist}</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden mb-2 border border-line/20">
+                      {art && <img src={art} alt="" className="w-full h-full object-cover" />}
+                      <div className="absolute inset-0 bg-chassis/0 group-hover:bg-chassis/30 transition-all flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-full bg-signal/90 text-ink flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all">
+                          <Play size={15} fill="currentColor" className="ml-0.5" />
+                        </div>
                       </div>
                     </div>
-                    <button className="w-9 h-9 rounded-full bg-signal/10 text-signal flex items-center justify-center group-hover:bg-signal group-hover:text-ink transition-all">
-                      <Play size={16} fill="currentColor" className="ml-0.5" />
-                    </button>
+                    <p className="text-xs font-medium text-paper group-hover:text-signal truncate">{trTitle}</p>
+                    <p className="text-[11px] text-muted truncate">{trArtist}</p>
                   </div>
                 )
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </section>
       </div>
 
