@@ -12,7 +12,7 @@ import PlaylistPage from './pages/PlaylistPage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
 import NowPlayingPage from './Pages/NowPlayingPage.jsx'
 import LyricsPage from './Pages/LyricsPage.jsx'
-
+import RecommendationsPage from './Pages/RecommendationsPage.jsx'
 function AppShell({ children, onOpenQueue }) {
   return (
     <div className="flex min-h-screen bg-ink">
