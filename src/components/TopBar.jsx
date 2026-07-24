@@ -9,7 +9,7 @@ export default function TopBar({ onOpenQueue }) {
 
   const submit = (e) => {
     e.preventDefault()
-    if (value.trim()) navigate(`/search?q=${(value.trim())}`)
+    if (value.trim()) navigate(`/search?q=${encodeURIComponent(value.trim())}`)
   }
 
   return (
