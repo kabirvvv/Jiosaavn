@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { bestAudioUrl, getSongById } from '../api/jiosaavn'
+import { getLyrics } from '../api/lrclib'
+import { stripHtml, artistNames } from '../utils/format'
 export const THEMES = {
   emerald: {
     name: 'Emerald',
@@ -105,6 +107,8 @@ export function PlayerProvider({ children }) {
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(0)
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0)
   const currentTrack = queueIndex >= 0 ? queue[queueIndex] : null
+  const [lyrics, setLyrics] = useState(null)
+  const [lyricsLoading, setLyricsLoading] = useState(false)
   // Apply Theme CSS variables
   const changeTheme = useCallback((themeKey) => {
     const theme = THEMES[themeKey] || THEMES.emerald
@@ -158,6 +162,31 @@ export function PlayerProvider({ children }) {
     }, 1000)
     return () => clearInterval(interval)
   }, [sleepTimerMinutes])
+  // Auto-load lyrics from LRCLIB whenever the current track changes, so both
+  // the Now Playing preview and the dedicated Lyrics page read the same
+  // already-fetched data instead of each re-fetching independently.
+  useEffect(() => {
+    if (!currentTrack) {
+      setLyrics(null)
+      return
+    }
+    let isMounted = true
+    setLyricsLoading(true)
+    setLyrics(null)
+    const trackName = stripHtml(currentTrack.title || currentTrack.name || '')
+    const artistName = artistNames(currentTrack)
+    const albumName = currentTrack.album?.name ? stripHtml(currentTrack.album.name) : undefined
+    getLyrics({
+      trackName,
+      artistName,
+      albumName,
+      durationSeconds: currentTrack.duration
+    })
+      .then((res) => { if (isMounted) setLyrics(res) })
+      .catch(() => { if (isMounted) setLyrics(null) })
+      .finally(() => { if (isMounted) setLyricsLoading(false) })
+    return () => { isMounted = false }
+  }, [currentTrack?.id])
   const handleEndedRef = useRef(null)
   const loadAndPlay = useCallback(async (track) => {
     let playable = track
@@ -322,6 +351,8 @@ export function PlayerProvider({ children }) {
         eqPreset,
         sleepTimerMinutes,
         sleepTimerRemaining,
+        lyrics,
+        lyricsLoading,
         setIsFullPlayerOpen,
         setShuffle,
         setRepeatMode,
