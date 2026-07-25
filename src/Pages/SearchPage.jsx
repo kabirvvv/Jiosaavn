@@ -79,27 +79,7 @@ export default function SearchPage() {
   return (
     <div>
       {/* Search input — animates in on mount, this is the "expand" moment */}
-      <motion.form
-        onSubmit={submit}
-        initial={{ opacity: 0, scaleY: 0.85, y: -8 }}
-        animate={{ opacity: 1, scaleY: 1, y: 0 }}
-        transition={{ duration: 0.28, ease: 'easeOut' }}
-        style={{ transformOrigin: 'top' }}
-        className="mb-6"
-      >
-        <div className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors">
-          <Search size={16} className="text-muted flex-shrink-0" />
-          <input
-            autoFocus
-            name="signal-deck-search"
-            id="signal-deck-search"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="Search tracks, albums, artists, playlists"
-            className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
-          />
-        </div>
-      </motion.form>
+      
 
       {!query && <EmptyState />}
       {query && loading && <LoadingState />}
