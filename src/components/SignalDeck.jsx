@@ -113,7 +113,7 @@ export default function SignalDeck({ onOpenQueue }) {
   }
 
   return (
-    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-chassis border-t border-line shadow-deck">
+    <div className="fixed bottom-14 md:bottom-0 left-0 right-0 z-40 bg-chassis border-t border-line shadow-deck">
       <div className="grain-surface">
         <div className="px-3 pt-1.5">
           <div className="flex items-center gap-2 text-[10px] text-muted font-mono">
