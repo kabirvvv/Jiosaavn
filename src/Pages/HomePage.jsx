@@ -24,6 +24,7 @@ function getGreeting() {
   if (hour >= 17 && hour < 21) return 'Good Evening'
   return 'Good Night'
 }
+
 function SongShelf({ title, icon, songs, direction, currentTrack, isPlaying, togglePlay, playNow }) {
   if (!songs || songs.length === 0) return null
   return (
@@ -45,55 +46,6 @@ function SongShelf({ title, icon, songs, direction, currentTrack, isPlaying, tog
   )
 }
 
-      {/* Trending Hits */}
-      {loading ? (
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
-          ))}
-        </div>
-      ) : (
-        <SongShelf title="Trending Hits" icon={<Flame className="text-signal" size={18} />} songs={trendingSongs} direction="left" />
-      )}
-
-      {/* Featured Playlists */}
-      {!loading && topPlaylists.length > 0 && (
-        <Shelf title="Featured Playlists" icon={<Radio className="text-signal" size={18} />} direction="right">
-          {topPlaylists.map((pl) => (
-            <ShelfCard key={pl.id} item={pl} kind="playlist" />
-          ))}
-        </Shelf>
-      )}
-
-      {/* Popular Artists */}
-      {!loading && popularArtists.length > 0 && (
-        <Shelf title="Popular Artists" icon={<UserCheck className="text-signal" size={18} />} direction="left">
-          {popularArtists.map((artist) => (
-            <ShelfCard key={artist.id} item={artist} kind="artist" />
-          ))}
-        </Shelf>
-      )}
-
-      {/* Singles */}
-      {extraLoading ? (
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
-          ))}
-        </div>
-      ) : (
-        <SongShelf title="Singles" icon={<Star className="text-signal" size={18} />} songs={singlesSongs} direction="right" />
-      )}
-
-      {/* International */}
-      {!extraLoading && (
-        <SongShelf title="International" icon={<Globe2 className="text-signal" size={18} />} songs={internationalSongs} direction="left" />
-      )}
-
-      {/* All Time Favorites */}
-      {!extraLoading && (
-        <SongShelf title="All Time Favorites" icon={<Sparkles className="text-signal" size={18} />} songs={allTimeFavSongs} direction="right" />
-      )}
 export default function HomePage() {
   const { currentTrack, isPlaying, togglePlay, playNow } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
@@ -104,8 +56,6 @@ export default function HomePage() {
   const [topPlaylists, setTopPlaylists] = useState([])
   const [popularArtists, setPopularArtists] = useState([])
 
-  // Homepage-wide sections — independent of the genre pill filter above,
-  // so they load once on mount rather than re-fetching per category.
   const [singlesSongs, setSinglesSongs] = useState([])
   const [internationalSongs, setInternationalSongs] = useState([])
   const [allTimeFavSongs, setAllTimeFavSongs] = useState([])
@@ -262,6 +212,91 @@ export default function HomePage() {
         </div>
       ) : null}
 
+      {/* Trending Hits */}
+      {loading ? (
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
+          ))}
+        </div>
+      ) : (
+        <SongShelf
+          title="Trending Hits"
+          icon={<Flame className="text-signal" size={18} />}
+          songs={trendingSongs}
+          direction="left"
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          togglePlay={togglePlay}
+          playNow={playNow}
+        />
+      )}
+
+      {/* Featured Playlists */}
+      {!loading && topPlaylists.length > 0 && (
+        <Shelf title="Featured Playlists" icon={<Radio className="text-signal" size={18} />} direction="right">
+          {topPlaylists.map((pl) => (
+            <ShelfCard key={pl.id} item={pl} kind="playlist" />
+          ))}
+        </Shelf>
+      )}
+
+      {/* Popular Artists */}
+      {!loading && popularArtists.length > 0 && (
+        <Shelf title="Popular Artists" icon={<UserCheck className="text-signal" size={18} />} direction="left">
+          {popularArtists.map((artist) => (
+            <ShelfCard key={artist.id} item={artist} kind="artist" />
+          ))}
+        </Shelf>
+      )}
+
+      {/* Singles */}
+      {extraLoading ? (
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
+          ))}
+        </div>
+      ) : (
+        <SongShelf
+          title="Singles"
+          icon={<Star className="text-signal" size={18} />}
+          songs={singlesSongs}
+          direction="right"
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          togglePlay={togglePlay}
+          playNow={playNow}
+        />
+      )}
+
+      {/* International */}
+      {!extraLoading && (
+        <SongShelf
+          title="International"
+          icon={<Globe2 className="text-signal" size={18} />}
+          songs={internationalSongs}
+          direction="left"
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          togglePlay={togglePlay}
+          playNow={playNow}
+        />
+      )}
+
+      {/* All Time Favorites */}
+      {!extraLoading && (
+        <SongShelf
+          title="All Time Favorites"
+          icon={<Sparkles className="text-signal" size={18} />}
+          songs={allTimeFavSongs}
+          direction="right"
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          togglePlay={togglePlay}
+          playNow={playNow}
+        />
+      )}
     </div>
   )
-}
+          }
