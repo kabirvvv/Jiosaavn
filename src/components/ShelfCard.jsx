@@ -4,31 +4,37 @@ import { useEffect, useRef, useState } from 'react'
 import { bestImageUrl } from '../api/jiosaavn'
 import { stripHtml, artistNames } from '../utils/format'
 
-function MarqueeText({ text, className = '' }) {
+function MarqueeText({ text, className = '', direction = 'left' }) {
   const containerRef = useRef(null)
   const textRef = useRef(null)
-  const [distance, setDistance] = useState(0)
+  const [overflowing, setOverflowing] = useState(false)
 
   useEffect(() => {
     const measure = () => {
       if (!containerRef.current || !textRef.current) return
-      const overflow = textRef.current.scrollWidth - containerRef.current.clientWidth
-      setDistance(overflow > 2 ? overflow : 0)
+      setOverflowing(textRef.current.scrollWidth - containerRef.current.clientWidth > 2)
     }
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
   }, [text])
 
+  if (!overflowing) {
+    return (
+      <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className}`}>
+        <span ref={textRef} className="inline-block">{text}</span>
+      </div>
+    )
+  }
+
+  const animationName = direction === 'right' ? 'card-marquee-right' : 'card-marquee-left'
+
   return (
     <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className}`}>
-      <span
-        ref={textRef}
-        className={`inline-block ${distance ? 'marquee-text' : ''}`}
-        style={distance ? { '--marquee-distance': `-${distance}px` } : undefined}
-      >
-        {text}
-      </span>
+      <div className="inline-flex" style={{ animation: `${animationName} 8s linear infinite` }}>
+        <span ref={textRef} className="inline-block pr-8">{text}</span>
+        <span className="inline-block pr-8" aria-hidden="true">{text}</span>
+      </div>
     </div>
   )
 }
@@ -76,8 +82,8 @@ export default function ShelfCard({ item, kind, onPlay, isCurrent = false, isPla
 
   const textBlock = (
     <>
-      <MarqueeText text={title} className={`mt-2 text-sm ${isSong && isCurrent ? 'text-signal' : 'text-paper'}`} />
-      <MarqueeText text={subtitle} className="text-xs text-muted" />
+      <MarqueeText text={title} direction="left" className={`mt-2 text-sm ${isSong && isCurrent ? 'text-signal' : 'text-paper'}`} />
+      <MarqueeText text={subtitle} direction="right" className="text-xs text-muted" />
     </>
   )
 
