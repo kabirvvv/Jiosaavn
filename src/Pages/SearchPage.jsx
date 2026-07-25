@@ -96,7 +96,7 @@ export default function SearchPage() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Search tracks, albums, artists, playlists"
-            className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted"
+            className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
           />
         </div>
       </motion.form>
