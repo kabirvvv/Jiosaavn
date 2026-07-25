@@ -202,6 +202,38 @@ input[type='range'].theme-seek::-moz-range-thumb {
   animation: repeat-morph-in 0.35s ease-out;
 }
 
+/* Hide scrollbar but keep scroll functional (genre pill row) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Shelf auto-scroll */
+@keyframes shelf-scroll-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes shelf-scroll-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.shelf-viewport:hover .shelf-track,
+.shelf-viewport:focus-within .shelf-track {
+  animation-play-state: paused;
+}
+
+/* Card title/artist overflow marquee */
+@keyframes marquee-bounce {
+  0%, 15%   { transform: translateX(0); }
+  50%       { transform: translateX(var(--marquee-distance, 0)); }
+  85%, 100% { transform: translateX(0); }
+}
+.marquee-text {
+  animation: marquee-bounce 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf-track { animation: none !important; }
+  .marquee-text { animation: none !important; }
+}
 /* Now Playing lyrics preview strip — plays when a new line enters the
    3-line window (keyed by line.time, so only genuinely new lines remount
    and animate; continuing lines just ease their color/scale via the
