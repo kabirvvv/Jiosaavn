@@ -39,7 +39,8 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile bottom rail */}
-      <nav className="md:hidden fixed bottom-16 left-0 right-0 z-30 bg-panel border-t border-line flex justify-around py-1.5">
+      
+<nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-panel border-t border-line flex justify-around py-1.5">
         {links.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
