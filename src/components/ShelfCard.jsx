@@ -1,18 +1,46 @@
 import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { bestImageUrl } from '../api/jiosaavn'
 import { stripHtml } from '../utils/format'
+
+function MarqueeText({ text, className = '' }) {
+  const containerRef = useRef(null)
+  const textRef = useRef(null)
+  const [distance, setDistance] = useState(0)
+
+  useEffect(() => {
+    const measure = () => {
+      if (!containerRef.current || !textRef.current) return
+      const overflow = textRef.current.scrollWidth - containerRef.current.clientWidth
+      setDistance(overflow > 2 ? overflow : 0)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [text])
+
+  return (
+    <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className}`}>
+      <span
+        ref={textRef}
+        className={`inline-block ${distance ? 'marquee-text' : ''}`}
+        style={distance ? { '--marquee-distance': `-${distance}px` } : undefined}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
 
 export default function ShelfCard({ item, kind }) {
   const title = stripHtml(item.title || item.name || '')
   const artwork = bestImageUrl(item.image)
   const isArtist = kind === 'artist'
-
   const to =
     kind === 'album' ? `/album/${item.id}` :
     kind === 'artist' ? `/artist/${item.id}` :
     kind === 'playlist' ? `/playlist/${item.id}` : '#'
-
   const subtitle =
     kind === 'album' ? stripHtml(item.artist || item.subtitle || item.year || '') :
     kind === 'artist' ? 'Artist' :
@@ -36,8 +64,8 @@ export default function ShelfCard({ item, kind }) {
           </span>
         )}
       </div>
-      <p className="mt-2 text-sm text-paper truncate">{title}</p>
-      <p className="text-xs text-muted truncate">{subtitle}</p>
+      <MarqueeText text={title} className="mt-2 text-sm text-paper" />
+      <MarqueeText text={subtitle} className="text-xs text-muted" />
     </Link>
   )
 }
