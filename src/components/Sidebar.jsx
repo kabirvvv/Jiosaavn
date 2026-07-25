@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { Search, Library, Radio, Disc3 } from 'lucide-react'
+import { Home, Library, Radio, Disc3 } from 'lucide-react'
 
 const links = [
-  { to: '/', label: 'Search', icon: Search, end: true },
+  { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/library', label: 'Library', icon: Library }
 ]
 
@@ -58,4 +58,4 @@ export default function Sidebar() {
       </nav>
     </>
   )
-}
+                       }
