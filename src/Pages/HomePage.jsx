@@ -24,7 +24,76 @@ function getGreeting() {
   if (hour >= 17 && hour < 21) return 'Good Evening'
   return 'Good Night'
 }
+function SongShelf({ title, icon, songs, direction, currentTrack, isPlaying, togglePlay, playNow }) {
+  if (!songs || songs.length === 0) return null
+  return (
+    <Shelf title={title} icon={icon} direction={direction}>
+      {songs.map((track) => {
+        const isCurrent = currentTrack?.id === track.id
+        return (
+          <ShelfCard
+            key={track.id}
+            item={track}
+            kind="song"
+            isCurrent={isCurrent}
+            isPlaying={isCurrent && isPlaying}
+            onPlay={() => (isCurrent && isPlaying ? togglePlay() : playNow(track, songs))}
+          />
+        )
+      })}
+    </Shelf>
+  )
+}
 
+      {/* Trending Hits */}
+      {loading ? (
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
+          ))}
+        </div>
+      ) : (
+        <SongShelf title="Trending Hits" icon={<Flame className="text-signal" size={18} />} songs={trendingSongs} direction="left" />
+      )}
+
+      {/* Featured Playlists */}
+      {!loading && topPlaylists.length > 0 && (
+        <Shelf title="Featured Playlists" icon={<Radio className="text-signal" size={18} />} direction="right">
+          {topPlaylists.map((pl) => (
+            <ShelfCard key={pl.id} item={pl} kind="playlist" />
+          ))}
+        </Shelf>
+      )}
+
+      {/* Popular Artists */}
+      {!loading && popularArtists.length > 0 && (
+        <Shelf title="Popular Artists" icon={<UserCheck className="text-signal" size={18} />} direction="left">
+          {popularArtists.map((artist) => (
+            <ShelfCard key={artist.id} item={artist} kind="artist" />
+          ))}
+        </Shelf>
+      )}
+
+      {/* Singles */}
+      {extraLoading ? (
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
+          ))}
+        </div>
+      ) : (
+        <SongShelf title="Singles" icon={<Star className="text-signal" size={18} />} songs={singlesSongs} direction="right" />
+      )}
+
+      {/* International */}
+      {!extraLoading && (
+        <SongShelf title="International" icon={<Globe2 className="text-signal" size={18} />} songs={internationalSongs} direction="left" />
+      )}
+
+      {/* All Time Favorites */}
+      {!extraLoading && (
+        <SongShelf title="All Time Favorites" icon={<Sparkles className="text-signal" size={18} />} songs={allTimeFavSongs} direction="right" />
+      )}
 export default function HomePage() {
   const { currentTrack, isPlaying, togglePlay, playNow } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
@@ -101,27 +170,6 @@ export default function HomePage() {
   const heroTitle = heroTrack ? stripHtml(heroTrack.title || heroTrack.name || '') : ''
   const heroSubtitle = heroTrack ? artistNames(heroTrack) : ''
   const isHeroPlaying = isPlaying && currentTrack?.id === heroTrack?.id
-
-  function SongShelf({ title, icon, songs, direction }) {
-    if (!songs || songs.length === 0) return null
-    return (
-      <Shelf title={title} icon={icon} direction={direction}>
-        {songs.map((track) => {
-          const isCurrent = currentTrack?.id === track.id
-          return (
-            <ShelfCard
-              key={track.id}
-              item={track}
-              kind="song"
-              isCurrent={isCurrent}
-              isPlaying={isCurrent && isPlaying}
-              onPlay={() => (isCurrent && isPlaying ? togglePlay() : playNow(track, songs))}
-            />
-          )
-        })}
-      </Shelf>
-    )
-  }
 
   return (
     <div className="space-y-10 pb-16">
@@ -214,55 +262,6 @@ export default function HomePage() {
         </div>
       ) : null}
 
-      {/* Trending Hits */}
-      {loading ? (
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
-          ))}
-        </div>
-      ) : (
-        <SongShelf title="Trending Hits" icon={<Flame className="text-signal" size={18} />} songs={trendingSongs} direction="left" />
-      )}
-
-      {/* Featured Playlists */}
-      {!loading && topPlaylists.length > 0 && (
-        <Shelf title="Featured Playlists" icon={<Radio className="text-signal" size={18} />} direction="right">
-          {topPlaylists.map((pl) => (
-            <ShelfCard key={pl.id} item={pl} kind="playlist" />
-          ))}
-        </Shelf>
-      )}
-
-      {/* Popular Artists */}
-      {!loading && popularArtists.length > 0 && (
-        <Shelf title="Popular Artists" icon={<UserCheck className="text-signal" size={18} />} direction="left">
-          {popularArtists.map((artist) => (
-            <ShelfCard key={artist.id} item={artist} kind="artist" />
-          ))}
-        </Shelf>
-      )}
-
-      {/* Singles */}
-      {extraLoading ? (
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="w-36 sm:w-40 h-56 rounded-xl bg-panel animate-pulse border border-line flex-shrink-0" />
-          ))}
-        </div>
-      ) : (
-        <SongShelf title="Singles" icon={<Star className="text-signal" size={18} />} songs={singlesSongs} direction="right" />
-      )}
-
-      {/* International */}
-      {!extraLoading && (
-        <SongShelf title="International" icon={<Globe2 className="text-signal" size={18} />} songs={internationalSongs} direction="left" />
-      )}
-
-      {/* All Time Favorites */}
-      {!extraLoading && (
-        <SongShelf title="All Time Favorites" icon={<Sparkles className="text-signal" size={18} />} songs={allTimeFavSongs} direction="right" />
-      )}
     </div>
   )
 }
