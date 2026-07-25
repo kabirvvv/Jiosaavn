@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import Sidebar from './components/Sidebar.jsx'
 import TopBar from './components/TopBar.jsx'
 import SignalDeck from './components/SignalDeck.jsx'
@@ -13,6 +14,7 @@ import LibraryPage from './pages/LibraryPage.jsx'
 import NowPlayingPage from './Pages/NowPlayingPage.jsx'
 import LyricsPage from './Pages/LyricsPage.jsx'
 import RecommendationsPage from './Pages/RecommendationsPage.jsx'
+
 function AppShell({ children, onOpenQueue }) {
   return (
     <div className="flex min-h-screen bg-ink">
@@ -30,26 +32,25 @@ function AppShell({ children, onOpenQueue }) {
 export default function App() {
   const [queueOpen, setQueueOpen] = useState(false)
   const location = useLocation()
-  // Now Playing and Lyrics are real full-screen pages — Sidebar/TopBar/mini
-  // player simply aren't mounted on these routes, so there's nothing left
-  // behind them to visibly slide or bleed through.
   const isFullScreenRoute = location.pathname === '/now-playing' || location.pathname === '/lyrics'
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><HomePage /></AppShell>} />
-        <Route path="/search" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><SearchPage /></AppShell>} />
-        <Route path="/album/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><AlbumPage /></AppShell>} />
-        <Route path="/artist/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><ArtistPage /></AppShell>} />
-        <Route path="/playlist/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><PlaylistPage /></AppShell>} />
-        <Route path="/library" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><LibraryPage /></AppShell>} />
-        <Route path="/now-playing" element={<NowPlayingPage />} />
-        <Route path="/lyrics" element={<LyricsPage />} />
-        <Route path="/recommendations/:trackId" element={<RecommendationsPage />} />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><HomePage /></AppShell>} />
+          <Route path="/search" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><SearchPage /></AppShell>} />
+          <Route path="/album/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><AlbumPage /></AppShell>} />
+          <Route path="/artist/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><ArtistPage /></AppShell>} />
+          <Route path="/playlist/:id" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><PlaylistPage /></AppShell>} />
+          <Route path="/library" element={<AppShell onOpenQueue={() => setQueueOpen(true)}><LibraryPage /></AppShell>} />
+          <Route path="/now-playing" element={<NowPlayingPage />} />
+          <Route path="/lyrics" element={<LyricsPage />} />
+          <Route path="/recommendations/:trackId" element={<RecommendationsPage />} />
+        </Routes>
+      </AnimatePresence>
       {!isFullScreenRoute && <SignalDeck onOpenQueue={() => setQueueOpen(true)} />}
       {!isFullScreenRoute && <QueueDrawer open={queueOpen} onClose={() => setQueueOpen(false)} />}
     </>
   )
-}
+      }
