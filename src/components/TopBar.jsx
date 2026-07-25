@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Search, Settings, Palette, Moon, Type, X } from 'lucide-react'
-import { usePlayer, THEMES } from '../context/PlayerContext'
+import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { motion } from 'framer-motion'
 
 const DEBOUNCE_MS = 400
@@ -19,14 +19,19 @@ export default function TopBar() {
 
   const {
     currentTheme, sleepTimerMinutes, sleepTimerRemaining,
-    setTheme, setSleepTimerMinutes
+    lyricsFontFamily, lyricsFontWeight, lyricsFontSize,
+    setTheme, setSleepTimerMinutes,
+    setLyricsFontFamily, setLyricsFontWeight, setLyricsFontSize
   } = usePlayer()
   const [customTimerMin, setCustomTimerMin] = useState('')
 
+  // Keep the input in sync if the URL's ?q= changes from elsewhere.
   useEffect(() => {
     setValue(params.get('q') || '')
   }, [params])
 
+  // Debounced search-as-you-type — only active while on /search, since this
+  // same input renders as the plain icon everywhere else.
   useEffect(() => {
     if (!isSearch) return
     if (isFirstRun.current) {
@@ -53,10 +58,22 @@ export default function TopBar() {
   return (
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
-        <motion.div layout transition={{ type: 'spring', stiffness: 400, damping: 32 }} className={isSearch ? 'flex-1 max-w-xl' : ''}>
+        {/* Single persistent element — icon or input, same instance across
+            navigation since TopBar now lives in a layout route (see
+            App.jsx) and never unmounts. `layout` lets framer-motion
+            animate the shape/size change automatically when isSearch
+            flips, giving the "icon expands into input" effect. */}
+        <motion.div
+          layout
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+          className={isSearch ? 'flex-1 max-w-xl' : ''}
+        >
           {isSearch ? (
             <form onSubmit={submit}>
-              <motion.div layout className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors">
+              <motion.div
+                layout
+                className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors"
+              >
                 <Search size={16} className="text-muted flex-shrink-0" />
                 <input
                   autoFocus
@@ -90,6 +107,15 @@ export default function TopBar() {
         </button>
       </div>
 
+      {/* Rendered via portal directly to document.body — this panel must
+          NOT be a DOM descendant of this component's root div. That root
+          div has `backdrop-blur` (backdrop-filter), which per the CSS spec
+          establishes a containing block for any `position: fixed`
+          descendant. Without the portal, the "fixed" backdrop/aside below
+          would anchor to THIS div's small height (~60px) instead of the
+          full viewport — meaning `h-full` resolves to "100% of the topbar",
+          clipping everything except the header out of view even though
+          it's correctly present in the DOM. */}
       {showSettings && createPortal(
         <>
           <div
@@ -107,6 +133,7 @@ export default function TopBar() {
               </button>
             </div>
 
+            {/* App Theme */}
             <div className="space-y-3">
               <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
                 <Palette size={14} className="text-signal" />
@@ -135,15 +162,69 @@ export default function TopBar() {
               </div>
             </div>
 
-            {/* --- Lyrics Style: placeholder, see note below chat --- */}
+            {/* Lyrics Style */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
                 <Type size={14} className="text-signal" />
                 <span>Lyrics Style</span>
               </h4>
-              <p className="text-xs text-muted">Needs PlayerContext.jsx to wire up correctly — see note.</p>
+
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono text-muted">Font</span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {Object.entries(LYRICS_FONTS).map(([key, f]) => (
+                    <button
+                      key={key}
+                      onClick={() => setLyricsFontFamily(key)}
+                      className={`py-1.5 rounded-md text-[11px] transition-all ${f.className} ${
+                        lyricsFontFamily === key
+                          ? 'bg-signal text-ink font-bold'
+                          : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono text-muted">Weight</span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {Object.entries(LYRICS_WEIGHTS).map(([key, w]) => (
+                    <button
+                      key={key}
+                      onClick={() => setLyricsFontWeight(key)}
+                      className={`py-1.5 rounded-md text-[10px] transition-all ${w.className} ${
+                        lyricsFontWeight === key
+                          ? 'bg-signal text-ink font-bold'
+                          : 'bg-panel border border-line/40 text-muted hover:text-paper'
+                      }`}
+                    >
+                      {w.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-muted">Size</span>
+                  <span className="text-[10px] font-mono text-paper">{lyricsFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={14}
+                  max={28}
+                  step={1}
+                  value={lyricsFontSize}
+                  onChange={(e) => setLyricsFontSize(Number(e.target.value))}
+                  className="w-full h-1 bg-line rounded-full accent-signal"
+                />
+              </div>
             </div>
 
+            {/* Sleep Timer */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
@@ -196,4 +277,4 @@ export default function TopBar() {
       )}
     </div>
   )
-}
+    }
