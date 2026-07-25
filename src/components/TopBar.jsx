@@ -1,32 +1,86 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, Settings, Palette, Sliders, Moon, X } from 'lucide-react'
+import { Search, Settings, Palette, Moon, Type, X } from 'lucide-react'
 import { usePlayer, THEMES } from '../context/PlayerContext'
 import { motion } from 'framer-motion'
+
+const DEBOUNCE_MS = 400
 
 export default function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const isSearch = location.pathname === '/search'
+  const [params] = useSearchParams()
+  const [value, setValue] = useState(params.get('q') || '')
+  const debounceRef = useRef(null)
+  const isFirstRun = useRef(true)
   const [showSettings, setShowSettings] = useState(false)
 
   const {
-    currentTheme, eq, eqPreset, sleepTimerMinutes, sleepTimerRemaining,
-    setTheme, setEq, applyEqPreset, setSleepTimerMinutes
+    currentTheme, sleepTimerMinutes, sleepTimerRemaining,
+    setTheme, setSleepTimerMinutes
   } = usePlayer()
   const [customTimerMin, setCustomTimerMin] = useState('')
+
+  useEffect(() => {
+    setValue(params.get('q') || '')
+  }, [params])
+
+  useEffect(() => {
+    if (!isSearch) return
+    if (isFirstRun.current) {
+      isFirstRun.current = false
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = value.trim()
+    debounceRef.current = setTimeout(() => {
+      if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
+      else navigate('/search', { replace: true })
+    }, DEBOUNCE_MS)
+    return () => clearTimeout(debounceRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, isSearch])
+
+  function submit(e) {
+    e.preventDefault()
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = value.trim()
+    if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
+  }
 
   return (
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
-        <motion.button
-          layoutId="search-morph"
-          onClick={() => navigate('/search')}
-          className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-          aria-label="Search"
-        >
-          <Search size={18} />
-        </motion.button>
+        <motion.div layout transition={{ type: 'spring', stiffness: 400, damping: 32 }} className={isSearch ? 'flex-1 max-w-xl' : ''}>
+          {isSearch ? (
+            <form onSubmit={submit}>
+              <motion.div layout className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors">
+                <Search size={16} className="text-muted flex-shrink-0" />
+                <input
+                  autoFocus
+                  name="signal-deck-search"
+                  id="signal-deck-search"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="Search tracks, albums, artists, playlists"
+                  className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
+                />
+              </motion.div>
+            </form>
+          ) : (
+            <motion.button
+              layout
+              onClick={() => navigate('/search')}
+              className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </motion.button>
+          )}
+        </motion.div>
+
         <button
           onClick={() => setShowSettings(true)}
           className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
@@ -36,15 +90,6 @@ export default function TopBar() {
         </button>
       </div>
 
-      {/* Rendered via portal directly to document.body — this panel must
-          NOT be a DOM descendant of this component's root div. That root
-          div has `backdrop-blur` (backdrop-filter), which per the CSS spec
-          establishes a containing block for any `position: fixed`
-          descendant. Without the portal, the "fixed" backdrop/aside below
-          would anchor to THIS div's small height (~60px) instead of the
-          full viewport — meaning `h-full` resolves to "100% of the topbar",
-          clipping everything except the header out of view even though
-          it's correctly present in the DOM. */}
       {showSettings && createPortal(
         <>
           <div
@@ -54,8 +99,8 @@ export default function TopBar() {
           <aside className="fixed top-0 right-0 z-[110] h-screen w-full sm:w-80 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-line/40 pb-3">
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
-                <Sliders className="text-signal" size={18} />
-                <span>Audio & Vibe Engine</span>
+                <Settings className="text-signal" size={18} />
+                <span>App Settings</span>
               </h3>
               <button onClick={() => setShowSettings(false)} className="text-muted hover:text-paper">
                 <X size={18} />
@@ -90,7 +135,14 @@ export default function TopBar() {
               </div>
             </div>
 
-            
+            {/* --- Lyrics Style: placeholder, see note below chat --- */}
+            <div className="space-y-3 border-t border-line/40 pt-4">
+              <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
+                <Type size={14} className="text-signal" />
+                <span>Lyrics Style</span>
+              </h4>
+              <p className="text-xs text-muted">Needs PlayerContext.jsx to wire up correctly — see note.</p>
+            </div>
 
             <div className="space-y-3 border-t border-line/40 pt-4">
               <div className="flex items-center justify-between">
@@ -144,4 +196,4 @@ export default function TopBar() {
       )}
     </div>
   )
-    }
+}
