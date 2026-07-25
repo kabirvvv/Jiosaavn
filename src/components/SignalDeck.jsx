@@ -70,13 +70,8 @@ export default function SignalDeck({ onOpenQueue }) {
   const swipeRef = useRef({ startX: 0, startY: 0, dragging: false, swiped: false })
 
   if (!currentTrack) {
-    return (
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-chassis border-t border-line flex items-center justify-center z-40">
-        <p className="text-eyebrow text-xs text-muted">Signal Deck — nothing queued</p>
-      </div>
-    )
+    return null
   }
-
   const artwork = bestImageUrl(currentTrack.image)
   const title = stripHtml(currentTrack.title || currentTrack.name || '')
   const subtitle = artistNames(currentTrack)
