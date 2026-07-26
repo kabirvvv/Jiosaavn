@@ -14,7 +14,7 @@ import LibraryPage from './pages/LibraryPage.jsx'
 import NowPlayingPage from './Pages/NowPlayingPage.jsx'
 import LyricsPage from './Pages/LyricsPage.jsx'
 import RecommendationsPage from './Pages/RecommendationsPage.jsx'
-
+import ProfilePage from './Pages/ProfilePage.jsx'
 // Layout route: Sidebar + TopBar mount ONCE and stay mounted across every
 // nested navigation (Home, Search, Album, ...). Only <Outlet/> swaps.
 // This is what lets TopBar's search element persist as the SAME instance
@@ -53,6 +53,8 @@ export default function App() {
           <Route path="/artist/:id" element={<ArtistPage />} />
           <Route path="/playlist/:id" element={<PlaylistPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route path="/now-playing" element={<NowPlayingPage />} />
         <Route path="/lyrics" element={<LyricsPage />} />
