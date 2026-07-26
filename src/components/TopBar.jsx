@@ -56,9 +56,9 @@ export default function TopBar() {
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
         {/* Brand mark — occupies the left space vacated by the search bar */}
-        {location.pathname === '/' ? (
+    {location.pathname === '/' ? (
   <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-    <Disc3 className="text-signal flex-shrink-0" size={20} />
+    <img src="/icon-192.png" alt="" className="w-5 h-5 flex-shrink-0" />
     <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
   </div>
 ) : (
