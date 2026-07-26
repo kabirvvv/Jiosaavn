@@ -125,7 +125,7 @@ export function PlayerProvider({ children }) {
   const [repeatMode, setRepeatMode] = useState('off') // off | all | one
   // Full Player & Visual Extensions State
   const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false)
-  const [currentTheme, setCurrentTheme] = useState('emerald')
+  const [currentTheme, setCurrentTheme] = useState('H.O.B')
   const [eq, setEq] = useState({ low: 0, mid: 0, high: 0 })
   const [eqPreset, setEqPreset] = useState('flat')
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(0)
