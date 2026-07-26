@@ -6,7 +6,7 @@ import { useLibrary } from '../context/LibraryContext'
 import { artistNames, stripHtml } from '../utils/format'
 import Shelf from '../components/Shelf'
 import ShelfCard from '../components/ShelfCard'
-
+import QuickPicks from '../components/QuickPicks'
 const CATEGORIES = [
   { id: 'all', label: 'All', query: 'Trending' },
   { id: 'bollywood', label: 'Bollywood', query: 'Bollywood Hits' },
