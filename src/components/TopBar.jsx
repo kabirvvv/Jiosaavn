@@ -170,7 +170,7 @@ export default function TopBar() {
             className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={() => setShowSettings(false)}
           />
-          <aside className="fixed top-0 right-0 z-[110] h-screen w-full sm:w-80 bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
+          <aside className="fixed top-0 right-0 z-[110] h-screen w-[85%] max-w-xs sm:w-80 sm:max-w-none bg-panel/95 border-l border-line/60 p-5 overflow-y-auto space-y-6 backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-line/40 pb-3">
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
                 <Settings className="text-signal" size={18} />
