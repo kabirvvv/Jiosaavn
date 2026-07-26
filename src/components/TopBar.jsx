@@ -10,7 +10,7 @@ const DEBOUNCE_MS = 400
 export default function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   const isSearch = location.pathname === '/search'
   const showTopBarCluster = location.pathname === '/' || isSearch
   const [params] = useSearchParams()
@@ -58,100 +58,74 @@ export default function TopBar() {
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
         {/* Brand mark — occupies the left space vacated by the search bar */}
-    {location.pathname === '/' ? (
-  <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-    <img src="/icon-192.png" alt="" className="w-5 h-5 flex-shrink-0" />
-    <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
-  </div>
-) : (
-  <div />
-)}
+        {location.pathname === '/' ? (
+          <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+            <img src="/icon-192.png" alt="" className="w-5 h-5 flex-shrink-0" />
+            <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
+          </div>
+        ) : (
+          <div />
+        )}
 
         {/* Right-hand cluster: search (icon or expanded input) + profile + settings.
-    Only rendered on Home and Search — hidden everywhere else per the
-    home-only icon request. When isSearch, this group grows to take the
-    remaining row width so the input has room, while the brand mark on
-    the left stays fixed-size. */}
-{showTopBarCluster && (
-  <div className={`flex items-center gap-2 ${isSearch ? 'flex-1 justify-end min-w-0' : 'flex-shrink-0'}`}>
-    <motion.div
-      layout
-      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-      className={isSearch ? 'flex-1 max-w-xl min-w-0' : ''}
-    >
-      {isSearch ? (
-        <form onSubmit={submit}>
-          <motion.div
-            layout
-            className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors"
-          >
-            <Search size={16} className="text-muted flex-shrink-0" />
-            <input
-              autoFocus
-              name="signal-deck-search"
-              id="signal-deck-search"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Search tracks, albums, artists, playlists"
-              className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
-            />
-          </motion.div>
-        </form>
-      ) : (
-        <motion.button
-          layout
-          onClick={() => navigate('/search')}
-          className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-          aria-label="Search"
-        >
-          <Search size={18} />
-        </motion.button>
-      )}
-    </motion.div>
+            Only rendered on Home and Search — hidden everywhere else per the
+            home-only icon request. When isSearch, this group grows to take the
+            remaining row width so the input has room, while the brand mark on
+            the left stays fixed-size. */}
+        {showTopBarCluster && (
+          <div className={`flex items-center gap-2 ${isSearch ? 'flex-1 justify-end min-w-0' : 'flex-shrink-0'}`}>
+            <motion.div
+              layout
+              transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              className={isSearch ? 'flex-1 max-w-xl min-w-0' : ''}
+            >
+              {isSearch ? (
+                <form onSubmit={submit}>
+                  <motion.div
+                    layout
+                    className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors"
+                  >
+                    <Search size={16} className="text-muted flex-shrink-0" />
+                    <input
+                      autoFocus
+                      name="signal-deck-search"
+                      id="signal-deck-search"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      placeholder="Search tracks, albums, artists, playlists"
+                      className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
+                    />
+                  </motion.div>
+                </form>
+              ) : (
+                <motion.button
+                  layout
+                  onClick={() => navigate('/search')}
+                  className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+                  aria-label="Search"
+                >
+                  <Search size={18} />
+                </motion.button>
+              )}
+            </motion.div>
 
-    <button
-      onClick={() => navigate('/profile')}
-      className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-      aria-label="Profile"
-    >
-      <User size={18} />
-    </button>
+            <button
+              onClick={() => navigate('/profile')}
+              className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+              aria-label="Profile"
+            >
+              <User size={18} />
+            </button>
 
-    <button
-      onClick={() => setShowSettings(true)}
-      className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
-      aria-label="Settings"
-    >
-      <Settings size={20} />
-    </button>
-  </div>
-)}
-              <motion.button
-                layout
-                onClick={() => navigate('/search')}
-                className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-                aria-label="Search"
-              >
-                <Search size={18} />
-              </motion.button>
-            
-
-          <button
-            onClick={() => navigate('/profile')}
-            className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-            aria-label="Profile"
-          >
-            <User size={18} />
-          </button>
-
-          <button
-            onClick={() => setShowSettings(true)}
-            className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
-            aria-label="Settings"
-          >
-            <Settings size={20} />
-          </button>
-        </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
+              aria-label="Settings"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Rendered via portal directly to document.body — this panel must
