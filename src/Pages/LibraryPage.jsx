@@ -6,7 +6,6 @@ import { usePlayer } from '../context/PlayerContext'
 import TrackRow from '../components/TrackRow'
 
 const LIKED_PREVIEW_COUNT = 10
-const REELS_PREVIEW_COUNT = 8
 
 export default function LibraryPage() {
   const { library, createPlaylist, deletePlaylist, renamePlaylist } = useLibrary()
@@ -144,5 +143,34 @@ export default function LibraryPage() {
           </form>
         )}
 
-        
+        {library.playlists.length === 0 ? (
+          <p className="text-sm text-muted">Create a reel to start organizing tracks into playlists.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {library.playlists.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setActivePlaylist(p.id)}
+                className="text-left group"
+              >
+                <div className="w-full aspect-square rounded-lg bg-panel2 border border-line flex items-center justify-center overflow-hidden">
+                  {p.songs.length > 0 ? (
+                    <div className="grid grid-cols-2 w-full h-full">
+                      {p.songs.slice(0, 4).map((s, i) => (
+                        <img key={i} src={s.image?.[s.image.length - 1]?.url} alt="" className="w-full h-full object-cover" />
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-2xl text-muted/40">♪</span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm truncate group-hover:text-signal">{p.name}</p>
+                <p className="text-xs text-muted">{p.songs.length} tracks</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  )
 }
