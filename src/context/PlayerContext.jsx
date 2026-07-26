@@ -349,24 +349,7 @@ export function PlayerProvider({ children }) {
   const playTrackFromList = useCallback((track, list) => {
     playNow(track, list)
   }, [playNow])
-  const applyEqPreset = useCallback((name) => {
-    setEqPreset(name)
-    switch (name) {
-      case 'bass':
-        setEq({ low: 6, mid: 0, high: -2 })
-        break
-      case 'pop':
-        setEq({ low: 2, mid: 4, high: 3 })
-        break
-      case 'chill':
-        setEq({ low: 3, mid: 1, high: -1 })
-        break
-      case 'flat':
-      default:
-        setEq({ low: 0, mid: 0, high: 0 })
-        break
-    }
-  }, [])
+  
   return (
     <PlayerContext.Provider
       value={{
@@ -382,8 +365,7 @@ export function PlayerProvider({ children }) {
         repeatMode,
         isFullPlayerOpen,
         currentTheme,
-        eq,
-        eqPreset,
+        
         sleepTimerMinutes,
         sleepTimerRemaining,
         lyrics,
@@ -395,8 +377,8 @@ export function PlayerProvider({ children }) {
         setShuffle,
         setRepeatMode,
         setTheme: changeTheme,
-        setEq,
-        applyEqPreset,
+        
+        
         setSleepTimerMinutes,
         setLyricsFontFamily,
         setLyricsFontWeight,
