@@ -56,10 +56,14 @@ export default function TopBar() {
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
         {/* Brand mark — occupies the left space vacated by the search bar */}
-        <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-          <Disc3 className="text-signal flex-shrink-0" size={20} />
-          <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
-        </div>
+        {location.pathname === '/' ? (
+  <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+    <Disc3 className="text-signal flex-shrink-0" size={20} />
+    <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
+  </div>
+) : (
+  <div />
+)}
 
         {/* Right-hand cluster: search (icon or expanded input) + profile + settings.
             When isSearch, this group grows to take the remaining row width so the
