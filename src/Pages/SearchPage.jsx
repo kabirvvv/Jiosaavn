@@ -165,7 +165,7 @@ export default function SearchPage() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-      <p className="text-eyebrow text-xs text-signal mb-3">Signal Deck</p>
+      <p className="text-eyebrow text-xs text-signal mb-3">Wavelength</p>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold mb-3 max-w-md">
         Cue up something to listen to.
       </h1>
