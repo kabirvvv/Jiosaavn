@@ -128,7 +128,7 @@ export default function QuickPicks() {
           <Sparkles className="text-signal" size={18} />
           <h2 className="text-sm font-display font-bold text-paper uppercase tracking-wide">Your Fav</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {Array.from({ length: TARGET_COUNT }).map((_, i) => (
             <div key={i} className="aspect-square rounded-xl bg-panel animate-pulse border border-line/30" />
           ))}
