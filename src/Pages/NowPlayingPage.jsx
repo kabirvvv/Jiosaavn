@@ -186,24 +186,17 @@ export default function NowPlayingPage() {
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-chassis/80 via-chassis/95 to-chassis" />
 
       <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
-          aria-label="Back"
-        >
-          <ChevronDown size={22} />
-        </button>
-        <span className="text-xs font-mono text-muted uppercase tracking-wider">Now Playing</span>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className={`p-2 rounded-full border border-line transition-all ${
-            showSettings ? 'bg-signal text-ink border-signal' : 'bg-panel/60 text-muted hover:text-paper hover:bg-panel'
-          }`}
-          aria-label="Settings"
-        >
-          <Settings size={20} />
-        </button>
-      </header>
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
+  <button
+    onClick={() => navigate(-1)}
+    className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
+    aria-label="Back"
+  >
+    <ChevronDown size={22} />
+  </button>
+  <span className="text-xs font-mono text-muted uppercase tracking-wider">Now Playing</span>
+  <div className="w-9" />
+</header>
 
       <div className="relative z-10 max-w-2xl mx-auto w-full p-6 space-y-8 pb-24">
         <div className="flex flex-col items-center w-full space-y-6">
