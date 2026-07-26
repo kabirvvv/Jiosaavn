@@ -126,8 +126,7 @@ export function PlayerProvider({ children }) {
   // Full Player & Visual Extensions State
   const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState('H.O.B')
-  const [eq, setEq] = useState({ low: 0, mid: 0, high: 0 })
-  const [eqPreset, setEqPreset] = useState('flat')
+  
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(0)
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0)
   // Lyrics Style settings — applied on both the Now Playing preview and the
