@@ -299,4 +299,11 @@ export default function HomePage() {
       )}
     </div>
   )
+  function Footer() {
+  return (
+    <footer className="w-full py-6 mb-24 text-center text-sm text-zinc-500">
+      Wavelength — a dream project, made by Kabir. I hope you like it :)
+    </footer>
+  );
+  }
           }
