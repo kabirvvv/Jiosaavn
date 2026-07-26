@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download, Type, ArrowRight
+  Heart, ChevronDown, ListMusic, Settings, Sparkles, Sliders, Moon, Palette, X, Trash2, Music, Maximize2, Download, Loader2, Type, ArrowRight
 } from 'lucide-react'
 import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { useLibrary } from '../context/LibraryContext'
-import { bestImageUrl, getSongSuggestions } from '../api/jiosaavn'
+import { bestImageUrl, bestAudioUrl, getSongSuggestions } from '../api/jiosaavn'
 import { formatTime, artistNames, stripHtml } from '../utils/format'
 
 // Renders the repeat/shuffle icon for the merged repeat+shuffle button.
@@ -42,6 +42,7 @@ export default function NowPlayingPage() {
   const [customTimerMin, setCustomTimerMin] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const canvasRef = useRef(null)
   const rafRef = useRef(null)
 
@@ -170,6 +171,33 @@ export default function NowPlayingPage() {
     }
   }
 
+  // Fetches the track's audio as a blob and triggers a real browser download
+  // via a temporary anchor element, rather than linking directly to the
+  // stream URL (which would just open/play it in a new tab, and would also
+  // expose the raw CDN URL instead of saving a file).
+  const handleDownload = async () => {
+    const url = bestAudioUrl(currentTrack)
+    if (!url || downloading) return
+    setDownloading(true)
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Fetch failed: ${response.status}`)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `${title}${subtitle ? ' - ' + subtitle : ''}.mp3`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      console.error('Download failed:', err)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   const activeLyricIndex = lyrics?.synced?.length
     ? lyrics.synced.reduce((acc, line, i) => (line.time <= progress ? i : acc), -1)
     : -1
@@ -185,17 +213,20 @@ export default function NowPlayingPage() {
       />
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-chassis/80 via-chassis/95 to-chassis" />
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
-  <button
-    onClick={() => navigate(-1)}
-    className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
-    aria-label="Back"
-  >
-    <ChevronDown size={22} />
-  </button>
-  <span className="text-xs font-mono text-muted uppercase tracking-wider">Now Playing</span>
-  <div className="w-9" />
-</header>
+      {/* Header background removed (was `border-b border-line/40 bg-chassis/60
+          backdrop-blur-md`) so the header itself is fully transparent — the
+          back button and label keep their own existing styling untouched. */}
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 bg-transparent">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
+          aria-label="Back"
+        >
+          <ChevronDown size={22} />
+        </button>
+        <span className="text-xs font-mono text-muted uppercase tracking-wider">Now Playing</span>
+        <div className="w-9" />
+      </header>
 
       <div className="relative z-10 max-w-2xl mx-auto w-full p-6 space-y-8 pb-24">
         <div className="flex flex-col items-center w-full space-y-6">
@@ -219,11 +250,12 @@ export default function NowPlayingPage() {
           </div>
           <div className="w-full flex items-center gap-3">
             <button
-              onClick={() => {/* TODO: wire up download */}}
-              className="w-11 h-11 shrink-0 rounded-full border border-line bg-panel/60 text-muted hover:text-signal hover:border-signal transition-all flex items-center justify-center"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="w-11 h-11 shrink-0 rounded-full border border-line bg-panel/60 text-muted hover:text-signal hover:border-signal transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-wait"
               aria-label="Download"
             >
-              <Download size={18} />
+              {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
             </button>
             <div className="flex-1 h-16 relative overflow-hidden rounded-xl bg-panel/30 border border-line/20">
               <canvas ref={canvasRef} className="w-full h-full" />
@@ -607,67 +639,4 @@ export default function NowPlayingPage() {
           <div className="flex items-center justify-between border-b border-line/40 pb-3">
             <div>
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
-                <ListMusic size={18} className="text-signal" />
-                <span>Up Next</span>
-              </h3>
-              <p className="text-xs text-muted font-mono">{queue.length} tracks in sequence</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={clearQueue}
-                className="px-3 py-1.5 rounded-lg border border-line bg-panel text-xs text-muted hover:text-signal hover:border-signal transition-colors flex items-center gap-1.5"
-              >
-                <Trash2 size={14} />
-                <span>Clear</span>
-              </button>
-              <button onClick={() => setShowQueue(false)} className="text-muted hover:text-paper">
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {queue.length === 0 ? (
-              <p className="text-center py-6 text-xs text-muted">Queue is empty.</p>
-            ) : (
-              queue.map((track, idx) => {
-                const isCurr = idx === queueIndex
-                const art = bestImageUrl(track.image)
-                const trTitle = stripHtml(track.title || track.name || '')
-                const trArtist = artistNames(track)
-                return (
-                  <div
-                    key={`${track.id}-${idx}`}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                      isCurr
-                        ? 'bg-signal/15 border-signal/40 text-signal font-semibold'
-                        : 'bg-panel/60 border-line/30 text-paper hover:bg-panel'
-                    }`}
-                  >
-                    <div
-                      onClick={() => playNow(track, queue)}
-                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                    >
-                      <span className="w-6 text-xs font-mono text-muted text-center">{idx + 1}</span>
-                      {art && <img src={art} alt="" className="w-10 h-10 rounded object-cover shrink-0 border border-line/30" />}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm truncate">{trTitle}</p>
-                        <p className="text-xs text-muted truncate">{trArtist}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFromQueue(idx)}
-                      className="p-2 text-muted hover:text-signal transition-colors"
-                      aria-label="Remove from queue"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </aside>
-      )}
-    </div>
-  )
-}
+                <ListMusic size={18} className="text-signal" /
