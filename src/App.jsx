@@ -42,6 +42,7 @@ export default function App() {
   const [queueOpen, setQueueOpen] = useState(false)
   const location = useLocation()
   const isFullScreenRoute = location.pathname === '/now-playing' || location.pathname === '/lyrics'
+  const hasBottomNav = !isFullScreenRoute && !location.pathname.startsWith('/recommendations')
 
   return (
     <>
@@ -60,7 +61,7 @@ export default function App() {
         <Route path="/lyrics" element={<LyricsPage />} />
         <Route path="/recommendations/:trackId" element={<RecommendationsPage />} />
       </Routes>
-      {!isFullScreenRoute && <SignalDeck onOpenQueue={() => setQueueOpen(true)} />}
+      {!isFullScreenRoute && <SignalDeck onOpenQueue={() => setQueueOpen(true)} hasBottomNav={hasBottomNav} />}
       {!isFullScreenRoute && <QueueDrawer open={queueOpen} onClose={() => setQueueOpen(false)} />}
     </>
   )
