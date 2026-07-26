@@ -52,7 +52,7 @@ export default function LyricsPage() {
 
       <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
         <button
-          onClick={() => navigate('/now-playing')}
+          onClick={() => navigate(-1)}
           className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
           aria-label="Back to player"
         >
