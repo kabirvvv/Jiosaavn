@@ -5,6 +5,8 @@ import { useProfile } from '../context/ProfileContext'
 import { usePlayer } from '../context/PlayerContext'
 import { artistNames, stripHtml } from '../utils/format'
 
+// Same chaining/dedup approach as RecommendationsPage.jsx, but tuned for a
+// smaller, fixed-size grid instead of an open-ended results page.
 const TARGET_COUNT = 12
 const MAX_CALLS = 6
 const SEEDS_PER_ROUND = 4
@@ -14,11 +16,14 @@ export default function QuickPicks() {
   const { currentTrack, isPlaying, togglePlay, playNow } = usePlayer()
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(false) // becomes true once we know whether we have any seeds at all
 
   const buildQuickPicks = useCallback(async (favSongs) => {
     setLoading(true)
 
+    // Resolve each favorite-song text entry to a real track via search.
+    // Cap at 4 entries so we're not firing a huge number of network calls
+    // for a profile with a long favorites list.
     const queries = (favSongs || []).filter(Boolean).slice(0, 4)
     if (queries.length === 0) {
       setTracks([])
@@ -60,6 +65,7 @@ export default function QuickPicks() {
       }
     }
 
+    // Seed round: pull suggestions for each resolved favorite track.
     const initialBatches = await Promise.all(
       seedIds.map((id) => {
         usedSeeds.add(id)
@@ -74,6 +80,7 @@ export default function QuickPicks() {
     setTracks(Array.from(seen.values()).slice(0, TARGET_COUNT))
     setReady(true)
 
+    // Chain further rounds only if we still need more tracks to fill the grid.
     while (seen.size < TARGET_COUNT && callCount < MAX_CALLS) {
       const nextSeeds = Array.from(seen.values())
         .filter((t) => !usedSeeds.has(t.id))
@@ -108,8 +115,12 @@ export default function QuickPicks() {
       setLoading(false)
       setReady(true)
     }
+    // profile.favSongs is a stable array reference until saveProfile runs again,
+    // so this only re-fires when the user's actual favorites change.
   }, [profile?.exists, profile?.favSongs, buildQuickPicks])
 
+  // Nothing to show yet, and we haven't confirmed there's genuinely no data —
+  // render a skeleton so the grid doesn't pop in abruptly once it's ready.
   if (!ready && loading) {
     return (
       <div className="space-y-3">
@@ -117,17 +128,23 @@ export default function QuickPicks() {
           <Sparkles className="text-signal" size={18} />
           <h2 className="text-sm font-display font-bold text-paper uppercase tracking-wide">Your Fav</h2>
         </div>
-        <div className="overflow-x-auto no-scrollbar">
-          <div className="grid grid-flow-col grid-rows-3 auto-cols-[10rem] gap-4 w-max">
-            {Array.from({ length: TARGET_COUNT }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-xl bg-panel animate-pulse border border-line/30" />
-            ))}
-          </div>
+        <div className="space-y-4">
+          {[0, 1, 2].map((rowIndex) => (
+            <div key={rowIndex} className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-4 w-max">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="w-40 shrink-0 aspect-square rounded-xl bg-panel animate-pulse border border-line/30" />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )
   }
 
+  // No profile / no favorite songs to seed from / nothing resolved — don't
+  // render an empty section, same convention as the other homepage shelves.
   if (tracks.length === 0) return null
 
   return (
@@ -136,46 +153,54 @@ export default function QuickPicks() {
         <Sparkles className="text-signal" size={18} />
         <h2 className="text-sm font-display font-bold text-paper uppercase tracking-wide">Your Fav</h2>
       </div>
-      <div className="overflow-x-auto no-scrollbar">
-        <div className="grid grid-flow-col grid-rows-3 auto-cols-[10rem] gap-4 w-max">
-          {tracks.map((track) => {
-            const isCurrent = currentTrack?.id === track.id
-            const isCurrentlyPlaying = isCurrent && isPlaying
-            const art = bestImageUrl(track.image)
-            const title = stripHtml(track.title || track.name || '')
-            const artists = artistNames(track)
-            return (
-              <div
-                key={track.id}
-                className="group rounded-xl border border-line/30 bg-panel/40 p-3 hover:border-signal hover:bg-panel/70 transition-all"
-              >
-                <div
-                  onClick={() => (isCurrentlyPlaying ? togglePlay() : playNow(track, tracks))}
-                  className="relative w-full aspect-square rounded-lg overflow-hidden mb-2.5 border border-line/20 cursor-pointer"
-                >
-                  {art && <img src={art} alt="" className="w-full h-full object-cover" />}
-                  <div className="absolute inset-0 bg-chassis/0 group-hover:bg-chassis/30 transition-all flex items-center justify-center">
+      <div className="space-y-4">
+        {[0, 1, 2].map((rowIndex) => {
+          const rowTracks = tracks.filter((_, i) => i % 3 === rowIndex)
+          if (rowTracks.length === 0) return null
+          return (
+            <div key={rowIndex} className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-4 w-max">
+                {rowTracks.map((track) => {
+                  const isCurrent = currentTrack?.id === track.id
+                  const isCurrentlyPlaying = isCurrent && isPlaying
+                  const art = bestImageUrl(track.image)
+                  const title = stripHtml(track.title || track.name || '')
+                  const artists = artistNames(track)
+                  return (
                     <div
-                      className={`w-10 h-10 rounded-full bg-signal/90 text-ink flex items-center justify-center scale-90 group-hover:scale-100 transition-all ${
-                        isCurrentlyPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}
+                      key={track.id}
+                      className="group w-40 shrink-0 rounded-xl border border-line/30 bg-panel/40 p-3 hover:border-signal hover:bg-panel/70 transition-all"
                     >
-                      {isCurrentlyPlaying ? (
-                        <Pause size={16} fill="currentColor" />
-                      ) : (
-                        <Play size={16} fill="currentColor" className="ml-0.5" />
-                      )}
+                      <div
+                        onClick={() => (isCurrentlyPlaying ? togglePlay() : playNow(track))}
+                        className="relative w-full aspect-square rounded-lg overflow-hidden mb-2.5 border border-line/20 cursor-pointer"
+                      >
+                        {art && <img src={art} alt="" className="w-full h-full object-cover" />}
+                        <div className="absolute inset-0 bg-chassis/0 group-hover:bg-chassis/30 transition-all flex items-center justify-center">
+                          <div
+                            className={`w-10 h-10 rounded-full bg-signal/90 text-ink flex items-center justify-center scale-90 group-hover:scale-100 transition-all ${
+                              isCurrentlyPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            {isCurrentlyPlaying ? (
+                              <Pause size={16} fill="currentColor" />
+                            ) : (
+                              <Play size={16} fill="currentColor" className="ml-0.5" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-paper group-hover:text-signal truncate">{title}</p>
+                        <p className="text-xs text-muted truncate">{artists}</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-paper group-hover:text-signal truncate">{title}</p>
-                  <p className="text-xs text-muted truncate">{artists}</p>
-                </div>
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
