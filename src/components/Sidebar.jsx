@@ -13,7 +13,7 @@ export default function Sidebar() {
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-line bg-panel h-screen sticky top-0 px-4 py-6">
         <div className="flex items-center gap-2 mb-8 px-1">
           <Disc3 className="text-signal" size={22} />
-          <span className="font-display font-bold text-lg tracking-tight">Signal Deck</span>
+          <span className="font-display font-bold text-lg tracking-tight">Wavelength</span>
         </div>
         <nav className="flex flex-col gap-1">
           {links.map(({ to, label, icon: Icon, end }) => (
