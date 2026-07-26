@@ -129,8 +129,6 @@ export default function HomePage() {
           {greeting}
         </h1>
       </div>
-            
-
       {/* Category Pills */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {CATEGORIES.map((cat) => (
@@ -147,8 +145,8 @@ export default function HomePage() {
           </button>
         ))}
       </div>
-{/* Quick Picks / Your Fav */}
-      <QuickPicks />
+      {/* Quick Picks / Your Fav */}
+             <QuickPicks />
       {/* Hero Spotlight */}
       {loading ? (
         <div className="w-full h-72 sm:h-80 rounded-2xl bg-panel animate-pulse border border-line" />
