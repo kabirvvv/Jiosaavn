@@ -305,7 +305,7 @@ export default function HomePage() {
           playNow={playNow}
         />
       )}
-
+     <div className="space-y-10 pb-4">
       <Footer />
     </div>
   )
