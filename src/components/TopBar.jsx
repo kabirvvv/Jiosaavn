@@ -134,8 +134,7 @@ export default function TopBar() {
               >
                 <Search size={18} />
               </motion.button>
-            )}
-          </motion.div>
+            
 
           <button
             onClick={() => navigate('/profile')}
