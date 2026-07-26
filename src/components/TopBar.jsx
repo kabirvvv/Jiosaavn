@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, Settings, Palette, Moon, Type, X, Disc3, User } from 'lucide-react'
+import { Search, Settings, Palette, Moon, Type, X, User } from 'lucide-react'
 import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { motion } from 'framer-motion'
 
