@@ -639,4 +639,4 @@ export default function NowPlayingPage() {
           <div className="flex items-center justify-between border-b border-line/40 pb-3">
             <div>
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
-                <ListMusic size={18} className="text-signal" /
+                <ListMusic size={18} className="text-signal"></ListMusic>
