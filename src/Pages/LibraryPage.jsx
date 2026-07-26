@@ -144,44 +144,5 @@ export default function LibraryPage() {
           </form>
         )}
 
-        {library.playlists.length === 0 ? (
-          <p className="text-sm text-muted">Create a reel to start organizing tracks into playlists.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {library.playlists.slice(0, REELS_PREVIEW_COUNT).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setActivePlaylist(p.id)}
-                  className="text-left group"
-                >
-                  <div className="w-full aspect-square rounded-lg bg-panel2 border border-line flex items-center justify-center overflow-hidden">
-                    {p.songs.length > 0 ? (
-                      <div className="grid grid-cols-2 w-full h-full">
-                        {p.songs.slice(0, 4).map((s, i) => (
-                          <img key={i} src={s.image?.[s.image.length - 1]?.url} alt="" className="w-full h-full object-cover" />
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-2xl text-muted/40">♪</span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm truncate group-hover:text-signal">{p.name}</p>
-                  <p className="text-xs text-muted">{p.songs.length} tracks</p>
-                </button>
-              ))}
-            </div>
-            {library.playlists.length > REELS_PREVIEW_COUNT && (
-              <Link
-                to="/library/reels"
-                className="block text-center text-xs text-muted hover:text-signal mt-4 py-2"
-              >
-                View all {library.playlists.length} reels
-              </Link>
-            )}
-          </>
-        )}
-      </section>
-    </div>
-  )
+        
 }
