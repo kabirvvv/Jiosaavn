@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, Settings, Palette, Moon, Type, X } from 'lucide-react'
+import { Search, Settings, Palette, Moon, Type, X, Disc3, User } from 'lucide-react'
 import { usePlayer, THEMES, LYRICS_FONTS, LYRICS_WEIGHTS } from '../context/PlayerContext'
 import { motion } from 'framer-motion'
 
@@ -25,13 +25,10 @@ export default function TopBar() {
   } = usePlayer()
   const [customTimerMin, setCustomTimerMin] = useState('')
 
-  // Keep the input in sync if the URL's ?q= changes from elsewhere.
   useEffect(() => {
     setValue(params.get('q') || '')
   }, [params])
 
-  // Debounced search-as-you-type — only active while on /search, since this
-  // same input renders as the plain icon everywhere else.
   useEffect(() => {
     if (!isSearch) return
     if (isFirstRun.current) {
@@ -58,53 +55,67 @@ export default function TopBar() {
   return (
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
-        {/* Single persistent element — icon or input, same instance across
-            navigation since TopBar now lives in a layout route (see
-            App.jsx) and never unmounts. `layout` lets framer-motion
-            animate the shape/size change automatically when isSearch
-            flips, giving the "icon expands into input" effect. */}
-        <motion.div
-          layout
-          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-          className={isSearch ? 'flex-1 max-w-xl' : ''}
-        >
-          {isSearch ? (
-            <form onSubmit={submit}>
-              <motion.div
-                layout
-                className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors"
-              >
-                <Search size={16} className="text-muted flex-shrink-0" />
-                <input
-                  autoFocus
-                  name="signal-deck-search"
-                  id="signal-deck-search"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  placeholder="Search tracks, albums, artists, playlists"
-                  className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
-                />
-              </motion.div>
-            </form>
-          ) : (
-            <motion.button
-              layout
-              onClick={() => navigate('/search')}
-              className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-              aria-label="Search"
-            >
-              <Search size={18} />
-            </motion.button>
-          )}
-        </motion.div>
+        {/* Brand mark — occupies the left space vacated by the search bar */}
+        <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+          <Disc3 className="text-signal flex-shrink-0" size={20} />
+          <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
+        </div>
 
-        <button
-          onClick={() => setShowSettings(true)}
-          className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
-          aria-label="Settings"
-        >
-          <Settings size={20} />
-        </button>
+        {/* Right-hand cluster: search (icon or expanded input) + profile + settings.
+            When isSearch, this group grows to take the remaining row width so the
+            input has room, while the brand mark on the left stays fixed-size. */}
+        <div className={`flex items-center gap-2 ${isSearch ? 'flex-1 justify-end min-w-0' : 'flex-shrink-0'}`}>
+          <motion.div
+            layout
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+            className={isSearch ? 'flex-1 max-w-xl min-w-0' : ''}
+          >
+            {isSearch ? (
+              <form onSubmit={submit}>
+                <motion.div
+                  layout
+                  className="flex items-center gap-2 bg-panel border border-line rounded-full px-4 py-2.5 focus-within:border-signal focus-within:ring-1 focus-within:ring-signal/40 transition-colors"
+                >
+                  <Search size={16} className="text-muted flex-shrink-0" />
+                  <input
+                    autoFocus
+                    name="signal-deck-search"
+                    id="signal-deck-search"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="Search tracks, albums, artists, playlists"
+                    className="bg-transparent outline-none focus-visible:outline-none text-sm flex-1 placeholder:text-muted"
+                  />
+                </motion.div>
+              </form>
+            ) : (
+              <motion.button
+                layout
+                onClick={() => navigate('/search')}
+                className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+                aria-label="Search"
+              >
+                <Search size={18} />
+              </motion.button>
+            )}
+          </motion.div>
+
+          <button
+            onClick={() => navigate('/profile')}
+            className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+            aria-label="Profile"
+          >
+            <User size={18} />
+          </button>
+
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
+            aria-label="Settings"
+          >
+            <Settings size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Rendered via portal directly to document.body — this panel must
@@ -133,7 +144,6 @@ export default function TopBar() {
               </button>
             </div>
 
-            {/* App Theme */}
             <div className="space-y-3">
               <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
                 <Palette size={14} className="text-signal" />
@@ -162,7 +172,6 @@ export default function TopBar() {
               </div>
             </div>
 
-            {/* Lyrics Style */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
                 <Type size={14} className="text-signal" />
@@ -224,7 +233,6 @@ export default function TopBar() {
               </div>
             </div>
 
-            {/* Sleep Timer */}
             <div className="space-y-3 border-t border-line/40 pt-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
@@ -277,4 +285,4 @@ export default function TopBar() {
       )}
     </div>
   )
-    }
+}
