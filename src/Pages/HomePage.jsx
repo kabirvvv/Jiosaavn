@@ -46,6 +46,14 @@ function SongShelf({ title, icon, songs, direction, currentTrack, isPlaying, tog
   )
 }
 
+function Footer() {
+  return (
+    <footer className="w-full py-6 mb-24 text-center text-sm text-zinc-500">
+      Wavelength — a dream project, made by Kabir. I hope you like it :)
+    </footer>
+  )
+}
+
 export default function HomePage() {
   const { currentTrack, isPlaying, togglePlay, playNow } = usePlayer()
   const { isLiked, toggleLiked } = useLibrary()
@@ -297,13 +305,8 @@ export default function HomePage() {
           playNow={playNow}
         />
       )}
+
+      <Footer />
     </div>
   )
-  function Footer() {
-  return (
-    <footer className="w-full py-6 mb-24 text-center text-sm text-zinc-500">
-      Wavelength — a dream project, made by Kabir. I hope you like it :)
-    </footer>
-  );
-  }
-          }
+}
