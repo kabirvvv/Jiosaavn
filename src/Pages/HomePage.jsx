@@ -130,7 +130,7 @@ export default function HomePage() {
   const isHeroPlaying = isPlaying && currentTrack?.id === heroTrack?.id
 
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-10 pb-4">
       {/* Greeting */}
       <div className="px-1">
         <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-signal drop-shadow-[0_0_18px_rgba(255,92,53,0.25)]">
@@ -305,7 +305,7 @@ export default function HomePage() {
           playNow={playNow}
         />
       )}
-     <div className="space-y-10 pb-4">
+
       <Footer />
     </div>
   )
