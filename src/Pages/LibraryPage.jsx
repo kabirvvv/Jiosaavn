@@ -5,8 +5,6 @@ import { useLibrary } from '../context/LibraryContext'
 import { usePlayer } from '../context/PlayerContext'
 import TrackRow from '../components/TrackRow'
 
-const LIKED_PREVIEW_COUNT = 10
-
 export default function LibraryPage() {
   const { library, createPlaylist, deletePlaylist, renamePlaylist } = useLibrary()
   const { playQueue } = usePlayer()
@@ -86,35 +84,26 @@ export default function LibraryPage() {
       <section className="mb-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-eyebrow text-xs text-muted">Liked Songs</h2>
-          {library.likedSongs.length > 0 && (
-            <button
-              onClick={() => playQueue(library.likedSongs, 0)}
-              className="text-xs text-signal hover:text-signal2 flex items-center gap-1"
-            >
-              <Play size={12} fill="currentColor" /> Play all
-            </button>
-          )}
         </div>
         {library.likedSongs.length === 0 ? (
           <p className="text-sm text-muted flex items-center gap-2">
             <Heart size={14} /> Tracks you like will collect here.
           </p>
         ) : (
-          <>
-            <div className="flex flex-col">
-              {library.likedSongs.slice(0, LIKED_PREVIEW_COUNT).map((song, i) => (
-                <TrackRow key={song.id} song={song} index={i} contextTracks={library.likedSongs} />
-              ))}
+          <Link to="/library/liked" className="inline-block text-left group w-40">
+            <div className="w-full aspect-square rounded-lg bg-panel2 border border-line flex items-center justify-center overflow-hidden relative">
+              <div className="grid grid-cols-2 w-full h-full">
+                {library.likedSongs.slice(0, 4).map((s, i) => (
+                  <img key={i} src={s.image?.[s.image.length - 1]?.url} alt="" className="w-full h-full object-cover" />
+                ))}
+              </div>
+              <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                <Heart size={22} className="text-signal opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" />
+              </span>
             </div>
-            {library.likedSongs.length > LIKED_PREVIEW_COUNT && (
-              <Link
-                to="/library/liked"
-                className="block text-center text-xs text-muted hover:text-signal mt-3 py-2"
-              >
-                View all {library.likedSongs.length} songs
-              </Link>
-            )}
-          </>
+            <p className="mt-2 text-sm truncate group-hover:text-signal">Liked Songs</p>
+            <p className="text-xs text-muted">{library.likedSongs.length} tracks</p>
+          </Link>
         )}
       </section>
 
