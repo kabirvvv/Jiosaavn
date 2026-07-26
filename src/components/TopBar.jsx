@@ -11,8 +11,18 @@ export default function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const isHome = location.pathname === '/'
   const isSearch = location.pathname === '/search'
-  const showTopBarCluster = location.pathname === '/' || isSearch
+  const showTopBarCluster = isHome || isSearch
+
+  function getPageTitle(pathname) {
+    if (pathname === '/library') return 'Library'
+    if (pathname === '/profile') return 'User Profile'
+    if (pathname.startsWith('/album/')) return 'Album'
+    if (pathname.startsWith('/artist/')) return 'Artist'
+    if (pathname.startsWith('/playlist/')) return 'Playlist'
+    return null
+  }
   const [params] = useSearchParams()
   const [value, setValue] = useState(params.get('q') || '')
   const debounceRef = useRef(null)
@@ -57,14 +67,21 @@ export default function TopBar() {
   return (
     <div className="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-line">
       <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
-        {/* Brand mark — occupies the left space vacated by the search bar */}
-        {location.pathname === '/' ? (
+        {/* Left slot: brand mark on Home, empty on Search (input takes the row),
+            page title everywhere else */}
+        {isHome ? (
           <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
             <img src="/icon-192.png" alt="" className="w-5 h-5 flex-shrink-0" />
             <span className="font-display font-bold text-base tracking-tight truncate">Wavelength</span>
           </div>
-        ) : (
+        ) : isSearch ? (
           <div />
+        ) : (
+          <div className="flex items-center min-w-0">
+            <span className="font-display font-bold text-base tracking-tight truncate text-paper">
+              {getPageTitle(location.pathname)}
+            </span>
+          </div>
         )}
 
         {/* Right-hand cluster: search (icon or expanded input) + profile + settings.
@@ -109,21 +126,25 @@ export default function TopBar() {
               )}
             </motion.div>
 
-            <button
-              onClick={() => navigate('/profile')}
-              className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
-              aria-label="Profile"
-            >
-              <User size={18} />
-            </button>
+            {isHome && (
+              <>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="text-muted hover:text-paper flex-shrink-0 p-2 rounded-full bg-panel border border-line hover:bg-panel2 transition-colors"
+                  aria-label="Profile"
+                >
+                  <User size={18} />
+                </button>
 
-            <button
-              onClick={() => setShowSettings(true)}
-              className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
-              aria-label="Settings"
-            >
-              <Settings size={20} />
-            </button>
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="text-muted hover:text-paper flex-shrink-0 p-1.5 rounded-full hover:bg-panel transition-colors"
+                  aria-label="Settings"
+                >
+                  <Settings size={20} />
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
