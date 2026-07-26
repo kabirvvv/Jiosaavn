@@ -176,7 +176,7 @@ export default function NowPlayingPage() {
   // stream URL (which would just open/play it in a new tab, and would also
   // expose the raw CDN URL instead of saving a file).
   const handleDownload = async () => {
-    const url = bestAudioUrl(currentTrack)
+    const url = bestAudioUrl(currentTrack.downloadUrl)   // ✅ passes the array
     if (!url || downloading) return
     setDownloading(true)
     try {
