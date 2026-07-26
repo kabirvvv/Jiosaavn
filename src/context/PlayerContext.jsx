@@ -234,6 +234,12 @@ export function PlayerProvider({ children }) {
         if (full) {
           playable = { ...track, ...full, image: track.image || full.image }
           url = bestAudioUrl(playable.downloadUrl)
+          // Without this, `playable` (which has the real downloadUrl) only
+          // ever gets used for `audio.src` below and is then discarded —
+          // `currentTrack` in state stays the original sparse object
+          // (e.g. from Search results), so anything reading currentTrack
+          // afterward, like the Download button, never sees a downloadUrl.
+          setQueue((prev) => prev.map((t) => (t.id === playable.id ? { ...t, ...playable } : t)))
         }
       } catch (e) {
         console.warn('Failed to fetch full song details for playback', e)
