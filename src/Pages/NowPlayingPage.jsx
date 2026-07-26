@@ -639,4 +639,67 @@ export default function NowPlayingPage() {
           <div className="flex items-center justify-between border-b border-line/40 pb-3">
             <div>
               <h3 className="text-base font-display font-bold text-paper flex items-center gap-2">
-                <ListMusic size={18} className="text-signal"></ListMusic>
+                <ListMusic size={18} className="text-signal" />
+                <span>Up Next</span>
+              </h3>
+              <p className="text-xs text-muted font-mono">{queue.length} tracks in sequence</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearQueue}
+                className="px-3 py-1.5 rounded-lg border border-line bg-panel text-xs text-muted hover:text-signal hover:border-signal transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 size={14} />
+                <span>Clear</span>
+              </button>
+              <button onClick={() => setShowQueue(false)} className="text-muted hover:text-paper">
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {queue.length === 0 ? (
+              <p className="text-center py-6 text-xs text-muted">Queue is empty.</p>
+            ) : (
+              queue.map((track, idx) => {
+                const isCurr = idx === queueIndex
+                const art = bestImageUrl(track.image)
+                const trTitle = stripHtml(track.title || track.name || '')
+                const trArtist = artistNames(track)
+                return (
+                  <div
+                    key={`${track.id}-${idx}`}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                      isCurr
+                        ? 'bg-signal/15 border-signal/40 text-signal font-semibold'
+                        : 'bg-panel/60 border-line/30 text-paper hover:bg-panel'
+                    }`}
+                  >
+                    <div
+                      onClick={() => playNow(track, queue)}
+                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                    >
+                      <span className="w-6 text-xs font-mono text-muted text-center">{idx + 1}</span>
+                      {art && <img src={art} alt="" className="w-10 h-10 rounded object-cover shrink-0 border border-line/30" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm truncate">{trTitle}</p>
+                        <p className="text-xs text-muted truncate">{trArtist}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeFromQueue(idx)}
+                      className="p-2 text-muted hover:text-signal transition-colors"
+                      aria-label="Remove from queue"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </aside>
+      )}
+    </div>
+  )
+}
