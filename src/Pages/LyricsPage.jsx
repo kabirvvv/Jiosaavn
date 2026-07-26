@@ -50,7 +50,12 @@ export default function LyricsPage() {
       />
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-chassis/85 via-chassis/95 to-chassis" />
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
+      {/* Changed from `sticky top-0` to `fixed inset-x-0 top-0` — sticky was
+          still technically re-flowing/shifting in some cases as lyrics
+          scrolled; fixed guarantees it never moves regardless of scroll
+          behavior in the lyrics container below. Explicit h-20 + matching
+          spacer div below keeps the layout math simple and predictable. */}
+      <header className="fixed top-0 inset-x-0 z-20 h-20 flex items-center justify-between px-6 border-b border-line/40 bg-chassis/60 backdrop-blur-md">
         <button
           onClick={() => navigate(-1)}
           className="p-2 rounded-full border border-line bg-panel/60 hover:bg-panel hover:scale-105 transition-all"
@@ -64,6 +69,10 @@ export default function LyricsPage() {
         </div>
         <div className="w-9" />
       </header>
+
+      {/* Spacer reserves the header's height in normal flow, since the
+          header itself is now `fixed` and taken out of flow entirely. */}
+      <div className="h-20" aria-hidden="true" />
 
       <div className="relative z-10 max-w-xl mx-auto w-full px-6 py-10">
         {lyricsLoading ? (
@@ -86,10 +95,6 @@ export default function LyricsPage() {
         ) : lyrics.synced.length ? (
           <div className="space-y-6 text-center pb-40">
             {lyrics.synced.map((line, i) => {
-              // Distance-based fade instead of a binary active/inactive swap —
-              // lines ease their opacity/scale/position as the active line
-              // moves, so a line change reads as a smooth transition rather
-              // than an instant snap.
               const distance = Math.abs(i - activeIndex)
               const isActive = i === activeIndex
               const opacity = isActive ? 1 : Math.max(0.15, 1 - distance * 0.32)
