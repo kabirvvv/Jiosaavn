@@ -143,3 +143,12 @@ input[type='range'].theme-seek::-moz-range-thumb {
 .preview-line-in {
   animation: preview-line-in 0.4s ease-out;
   }
+/* Suppress the global :focus-visible outline (see :focus-visible rule
+   above, the #FF7A57 outline) on individual interactive elements that
+   already have their own custom focus styling (focus:border-signal,
+   focus-within:ring, etc). Apply this single class instead of pairing
+   outline-none + focus-visible:outline-none by hand on every element. */
+.no-native-outline,
+.no-native-outline:focus-visible {
+  outline: none !important;
+    }
