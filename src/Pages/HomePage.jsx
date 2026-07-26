@@ -129,6 +129,8 @@ export default function HomePage() {
           {greeting}
         </h1>
       </div>
+            {/* Quick Picks / Your Fav */}
+      <QuickPicks />
 
       {/* Category Pills */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
