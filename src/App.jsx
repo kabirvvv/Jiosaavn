@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { AuthProvider, useAuth } from './contexts/AuthContext.jsx'
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import TopBar from './components/TopBar.jsx'
 import SignalDeck from './components/SignalDeck.jsx'
