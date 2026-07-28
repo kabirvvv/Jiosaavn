@@ -38,6 +38,7 @@ export default function SignInPage() {
       navigate("/");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
+      console.error(err);
     } finally {
       setBusy(false);
     }
