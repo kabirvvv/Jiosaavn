@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import TopBar from './components/TopBar.jsx'
 import SignalDeck from './components/SignalDeck.jsx'
@@ -42,27 +42,6 @@ function AppShellLayout({ onOpenQueue }) {
   )
 }
 
-// Gate: blocks rendering of protected routes until we know the auth state.
-// Redirects to /signin if there's no signed-in user.
-function RequireAuth({ children }) {
-  const { user, authLoading } = useAuth()
-  const location = useLocation()
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-ink text-white/60">
-        Loading...
-      </div>
-    )
-  }
-
-  if (!user) {
-    return <Navigate to="/signin" replace state={{ from: location }} />
-  }
-
-  return children
-}
-
 function AppRoutes() {
   const [queueOpen, setQueueOpen] = useState(false)
   const location = useLocation()
@@ -75,7 +54,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
 
-        <Route element={<RequireAuth><AppShellLayout onOpenQueue={() => setQueueOpen(true)} /></RequireAuth>}>
+        <Route element={<AppShellLayout onOpenQueue={() => setQueueOpen(true)} />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/album/:id" element={<AlbumPage />} />
@@ -86,9 +65,9 @@ function AppRoutes() {
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
-        <Route path="/now-playing" element={<RequireAuth><NowPlayingPage /></RequireAuth>} />
-        <Route path="/lyrics" element={<RequireAuth><LyricsPage /></RequireAuth>} />
-        <Route path="/recommendations/:trackId" element={<RequireAuth><RecommendationsPage /></RequireAuth>} />
+        <Route path="/now-playing" element={<NowPlayingPage />} />
+        <Route path="/lyrics" element={<LyricsPage />} />
+        <Route path="/recommendations/:trackId" element={<RecommendationsPage />} />
       </Routes>
       {!isFullScreenRoute && !isAuthRoute && (
         <SignalDeck onOpenQueue={() => setQueueOpen(true)} hasBottomNav={hasBottomNav} />
