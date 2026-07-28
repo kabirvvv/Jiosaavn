@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function SignInPage() {
-  const { signInWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
+  const { user, signInWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,6 +11,12 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   async function handleEmailSubmit(e) {
     e.preventDefault();
@@ -22,7 +28,6 @@ export default function SignInPage() {
       } else {
         await signInWithEmail(email, password);
       }
-      navigate("/");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
     } finally {
@@ -35,7 +40,6 @@ export default function SignInPage() {
     setBusy(true);
     try {
       await signInWithGoogle();
-      navigate("/");
     } catch (err) {
       setError(err.message.replace("Firebase: ", ""));
       console.error(err);
@@ -112,4 +116,4 @@ export default function SignInPage() {
       </div>
     </div>
   );
-  }
+}
