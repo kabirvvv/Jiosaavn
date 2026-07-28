@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Camera, Heart, ListMusic, Pencil, Music2, Mic2, Disc } from 'lucide-react'
 import { useProfile } from '../context/ProfileContext'
 import { useLibrary } from '../context/LibraryContext'
+import AuthButton from '../components/AuthButton'
 
 export default function ProfilePage() {
   const { profile, saveProfile } = useProfile()
@@ -30,6 +31,7 @@ export default function ProfilePage() {
             {library.likedSongs.length} liked · {library.playlists.length} reels
           </p>
         </div>
+        <AuthButton />
         <button
           onClick={() => setEditing(true)}
           className="p-2 rounded-full border border-line bg-panel hover:bg-panel2 text-muted hover:text-paper transition-colors flex-shrink-0"
@@ -219,4 +221,4 @@ function ProfileForm({ existing, onDone, onSave }) {
       </form>
     </div>
   )
-          }
+}
