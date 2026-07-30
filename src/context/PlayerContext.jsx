@@ -223,7 +223,40 @@ export function PlayerProvider({ children }) {
   const remoteApplyRef = useRef(false)
   const writeTimeoutRef = useRef(null)
 
+  // Guards a real race that existed here before: this effect and the
+  // write-back effect below are BOTH keyed on `user`, so switching accounts
+  // fires them in the same pass. Without this flag, the write-back effect
+  // would fire immediately on account switch — before Firestore has had a
+  // chance to respond — and stamp whatever was on screen a moment ago (the
+  // previous account's or guest's settings) straight into the new
+  // account's doc, clobbering their real saved settings. Writes are now
+  // blocked entirely until the first read for the CURRENT user completes.
+  const settingsReadyRef = useRef(false)
+  // Mirrors the live settings values outside React's render cycle, so the
+  // "brand new account, seed the doc" branch below can read current values
+  // without depending on a stale closure.
+  const settingsRef = useRef({
+    theme: currentTheme,
+    shuffle,
+    repeatMode,
+    lyricsFontFamily,
+    lyricsFontWeight,
+    lyricsFontSize
+  })
   useEffect(() => {
+    settingsRef.current = {
+      theme: currentTheme,
+      shuffle,
+      repeatMode,
+      lyricsFontFamily,
+      lyricsFontWeight,
+      lyricsFontSize
+    }
+  }, [currentTheme, shuffle, repeatMode, lyricsFontFamily, lyricsFontWeight, lyricsFontSize])
+
+  useEffect(() => {
+    settingsReadyRef.current = false // block writes until this user's real data has loaded
+
     if (!user) {
       modeRef.current = 'guest'
       const s = loadLocalSettings()
@@ -234,29 +267,41 @@ export function PlayerProvider({ children }) {
       setLyricsFontFamily(s.lyricsFontFamily)
       setLyricsFontWeight(s.lyricsFontWeight)
       setLyricsFontSize(s.lyricsFontSize)
+      settingsReadyRef.current = true // nothing async to wait for in guest mode
       return
     }
 
     modeRef.current = 'cloud'
     const userRef = doc(db, 'users', user.uid)
 
-    const unsub = onSnapshot(userRef, (snap) => {
-      const data = snap.data()
-      if (data?.settings) {
-        const s = data.settings
-        remoteApplyRef.current = true
-        if (s.theme) changeTheme(s.theme)
-        if (typeof s.shuffle === 'boolean') setShuffle(s.shuffle)
-        if (s.repeatMode) setRepeatMode(s.repeatMode)
-        if (s.lyricsFontFamily) setLyricsFontFamily(s.lyricsFontFamily)
-        if (s.lyricsFontWeight) setLyricsFontWeight(s.lyricsFontWeight)
-        if (s.lyricsFontSize) setLyricsFontSize(s.lyricsFontSize)
+    const unsub = onSnapshot(
+      userRef,
+      (snap) => {
+        const data = snap.data()
+        if (data?.settings) {
+          const s = data.settings
+          remoteApplyRef.current = true
+          if (s.theme) changeTheme(s.theme)
+          if (typeof s.shuffle === 'boolean') setShuffle(s.shuffle)
+          if (s.repeatMode) setRepeatMode(s.repeatMode)
+          if (s.lyricsFontFamily) setLyricsFontFamily(s.lyricsFontFamily)
+          if (s.lyricsFontWeight) setLyricsFontWeight(s.lyricsFontWeight)
+          if (s.lyricsFontSize) setLyricsFontSize(s.lyricsFontSize)
+        } else {
+          // Brand new account, no settings doc yet — seed it directly here
+          // (rather than relying on the write-back effect firing again)
+          // using whatever's currently held in memory.
+          setDoc(userRef, { settings: settingsRef.current }, { merge: true }).catch((e) => {
+            console.warn('Failed to seed initial settings', e)
+          })
+        }
+        settingsReadyRef.current = true // safe to allow writes for this user now
+      },
+      (err) => {
+        console.warn('Settings listener error', err)
+        settingsReadyRef.current = true // don't leave writes permanently blocked on error
       }
-      // If no settings field exists yet (brand new account), we deliberately
-      // do nothing here — the write-back effect below will then persist
-      // whatever is currently in memory (carried over from guest mode, or
-      // defaults) as this account's first-ever settings doc.
-    })
+    )
 
     return unsub
   }, [user, changeTheme])
@@ -267,8 +312,16 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     if (remoteApplyRef.current) {
       remoteApplyRef.current = false
+      if (writeTimeoutRef.current) clearTimeout(writeTimeoutRef.current)
       return
     }
+    if (!settingsReadyRef.current) {
+      // Still waiting on the initial read for the current user/guest —
+      // never write during this window, or we risk overwriting real data
+      // with stale leftovers from before the switch.
+      return
+    }
+
     const settings = {
       theme: currentTheme,
       shuffle,
