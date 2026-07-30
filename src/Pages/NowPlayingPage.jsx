@@ -27,9 +27,9 @@ export default function NowPlayingPage() {
   const navigate = useNavigate()
   const {
     currentTrack, queue, queueIndex, isPlaying, progress, duration,
-    shuffle, repeatMode, currentTheme, eq, eqPreset, sleepTimerMinutes,
+    shuffle, repeatMode, currentTheme, sleepTimerMinutes,
     sleepTimerRemaining, setShuffle, setRepeatMode, setTheme,
-    setEq, applyEqPreset, setSleepTimerMinutes, togglePlay, goNext, goPrev, seek,
+     setSleepTimerMinutes, togglePlay, goNext, goPrev, seek,
     playNow, removeFromQueue, clearQueue, lyrics, lyricsLoading,
     lyricsFontFamily, lyricsFontWeight, lyricsFontSize,
     setLyricsFontFamily, setLyricsFontWeight, setLyricsFontSize
@@ -468,12 +468,7 @@ export default function NowPlayingPage() {
               ))}
             </div>
           </div>
-          <div className="space-y-3 border-t border-line/40 pt-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
-                <Sliders size={14} className="text-signal" />
-                <span>Equalizer</span>
-              </h4>
+          
               <span className="text-[10px] font-mono text-signal uppercase">{eqPreset}</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
