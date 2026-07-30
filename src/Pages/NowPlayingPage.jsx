@@ -469,59 +469,7 @@ export default function NowPlayingPage() {
             </div>
           </div>
           
-              <span className="text-[10px] font-mono text-signal uppercase">{eqPreset}</span>
-            </div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {['flat', 'bass', 'pop', 'chill'].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => applyEqPreset(p)}
-                  className={`py-1 rounded-md text-[10px] font-mono capitalize transition-all ${
-                    eqPreset === p ? 'bg-signal text-ink font-bold' : 'bg-panel border border-line/40 text-muted hover:text-paper'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-            <div className="space-y-2 pt-1 text-xs font-mono text-muted">
-              <div className="flex items-center justify-between">
-                <span>Low Bass</span>
-                <span className="text-paper">{eq.low} dB</span>
-              </div>
-              <input
-                type="range"
-                min={-12}
-                max={12}
-                value={eq.low}
-                onChange={(e) => setEq((prev) => ({ ...prev, low: Number(e.target.value) }))}
-                className="w-full h-1 bg-line rounded-full accent-signal"
-              />
-              <div className="flex items-center justify-between">
-                <span>Mids</span>
-                <span className="text-paper">{eq.mid} dB</span>
-              </div>
-              <input
-                type="range"
-                min={-12}
-                max={12}
-                value={eq.mid}
-                onChange={(e) => setEq((prev) => ({ ...prev, mid: Number(e.target.value) }))}
-                className="w-full h-1 bg-line rounded-full accent-signal"
-              />
-              <div className="flex items-center justify-between">
-                <span>High Treble</span>
-                <span className="text-paper">{eq.high} dB</span>
-              </div>
-              <input
-                type="range"
-                min={-12}
-                max={12}
-                value={eq.high}
-                onChange={(e) => setEq((prev) => ({ ...prev, high: Number(e.target.value) }))}
-                className="w-full h-1 bg-line rounded-full accent-signal"
-              />
-            </div>
+              
           </div>
           <div className="space-y-3 border-t border-line/40 pt-4">
             <h4 className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-1.5">
