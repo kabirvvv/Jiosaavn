@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
+import { doc, setDoc, onSnapshot } from 'firebase/firestore'
+import { db } from '../firebase'
+import { useAuth } from './AuthContext'
 import { bestAudioUrl, getSongById } from '../api/jiosaavn'
 import { getLyrics } from '../api/lrclib'
 import { stripHtml, artistNames } from '../utils/format'
+
 export const THEMES = {
   emerald: {
     name: 'Emerald',
@@ -88,6 +92,7 @@ export const THEMES = {
     }
   }
 }
+
 // Converts "#RRGGBB" to Tailwind's expected "R G B" (space-separated, no
 // commas) format, so rgb(var(--x) / <alpha-value>) resolves correctly.
 function hexToRgbTriplet(hex) {
@@ -98,6 +103,7 @@ function hexToRgbTriplet(hex) {
   const b = bigint & 255
   return `${r} ${g} ${b}`
 }
+
 // Font family options for the Lyrics Style setting, reusing the three
 // fonts already established in the app's design system rather than
 // introducing new ones.
@@ -112,8 +118,50 @@ export const LYRICS_WEIGHTS = {
   semibold: { label: 'Semibold', className: 'font-semibold' },
   bold: { label: 'Bold', className: 'font-bold' }
 }
+
 const PlayerContext = createContext(null)
+
+// --- Settings persistence (guest = localStorage, signed-in = Firestore) ---
+// Mirrors the pattern already used in LibraryContext/ProfileContext.
+// Only "preference" settings live here — theme, shuffle/repeat, lyrics
+// style. Sleep timer is deliberately NOT persisted: restoring a stale
+// "30 min" setting on a brand new session would silently start a countdown
+// the user never asked for this time around.
+const SETTINGS_STORAGE_KEY = 'signaldeck.settings.v1'
+
+const DEFAULT_SETTINGS = {
+  theme: 'H.O.B', // NOTE: this doesn't match any THEMES key (keys are lowercase,
+  // e.g. 'hob') — that's a pre-existing quirk from before this persistence
+  // work, kept as-is so behavior doesn't silently change. It resolves to
+  // the Emerald theme via the `THEMES[key] || THEMES.emerald` fallback in
+  // changeTheme below. Flag if you'd rather it actually default to H.O.B.
+  shuffle: false,
+  repeatMode: 'off',
+  lyricsFontFamily: 'sans',
+  lyricsFontWeight: 'medium',
+  lyricsFontSize: 18
+}
+
+function loadLocalSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+  } catch (e) {
+    console.warn('Failed to load settings from storage', e)
+  }
+  return DEFAULT_SETTINGS
+}
+
+function saveLocalSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+  } catch (e) {
+    console.warn('Failed to persist settings', e)
+  }
+}
+
 export function PlayerProvider({ children }) {
+  const { user } = useAuth()
   const audioRef = useRef(null)
   const [queue, setQueue] = useState([])
   const [queueIndex, setQueueIndex] = useState(-1)
@@ -121,41 +169,136 @@ export function PlayerProvider({ children }) {
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.85)
-  const [shuffle, setShuffle] = useState(false)
-  const [repeatMode, setRepeatMode] = useState('off') // off | all | one
+
+  // --- Persisted settings state (seeded from localStorage so a guest's
+  // last choices are already correct on first paint, before any Firestore
+  // subscription has a chance to run) ---
+  const initialSettings = useRef(loadLocalSettings()).current
+  const [shuffle, setShuffle] = useState(initialSettings.shuffle)
+  const [repeatMode, setRepeatMode] = useState(initialSettings.repeatMode) // off | all | one
+  const [currentTheme, setCurrentTheme] = useState(initialSettings.theme)
+  const [lyricsFontFamily, setLyricsFontFamily] = useState(initialSettings.lyricsFontFamily)
+  const [lyricsFontWeight, setLyricsFontWeight] = useState(initialSettings.lyricsFontWeight)
+  const [lyricsFontSize, setLyricsFontSize] = useState(initialSettings.lyricsFontSize)
+
   // Full Player & Visual Extensions State
   const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false)
-  const [currentTheme, setCurrentTheme] = useState('H.O.B')
-  
+
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(0)
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0)
-  // Lyrics Style settings — applied on both the Now Playing preview and the
-  // full Lyrics page. fontSize is in px; a sensible default matches the
-  // previous fixed text-lg (~18px) main-page size.
-  const [lyricsFontFamily, setLyricsFontFamily] = useState('sans')
-  const [lyricsFontWeight, setLyricsFontWeight] = useState('medium')
-  const [lyricsFontSize, setLyricsFontSize] = useState(18)
+
   const currentTrack = queueIndex >= 0 ? queue[queueIndex] : null
   const [lyrics, setLyrics] = useState(null)
   const [lyricsLoading, setLyricsLoading] = useState(false)
+
   // Apply Theme CSS variables
- const changeTheme = useCallback((themeKey) => {
-  const theme = THEMES[themeKey] || THEMES.emerald
-  setCurrentTheme(themeKey)
-  const root = document.documentElement
-  Object.entries(theme.colors).forEach(([k, v]) => {
-    root.style.setProperty(k, v)
-  })
-  // Derive Tailwind-consumable RGB triplets from the theme's hex colors —
-  // this is what actually makes bg-signal / text-signal / bg-signal/15
-  // etc. respond to theme changes app-wide, not just the components that
-  // read --accent-main directly via getComputedStyle.
-  root.style.setProperty('--accent-main-rgb', hexToRgbTriplet(theme.colors['--accent-main']))
-  root.style.setProperty('--accent-secondary-rgb', hexToRgbTriplet(theme.colors['--accent-secondary']))
-}, [])
+  const changeTheme = useCallback((themeKey) => {
+    const theme = THEMES[themeKey] || THEMES.emerald
+    setCurrentTheme(themeKey)
+    const root = document.documentElement
+    Object.entries(theme.colors).forEach(([k, v]) => {
+      root.style.setProperty(k, v)
+    })
+    // Derive Tailwind-consumable RGB triplets from the theme's hex colors —
+    // this is what actually makes bg-signal / text-signal / bg-signal/15
+    // etc. respond to theme changes app-wide, not just the components that
+    // read --accent-main directly via getComputedStyle.
+    root.style.setProperty('--accent-main-rgb', hexToRgbTriplet(theme.colors['--accent-main']))
+    root.style.setProperty('--accent-secondary-rgb', hexToRgbTriplet(theme.colors['--accent-secondary']))
+  }, [])
+
   useEffect(() => {
     changeTheme(currentTheme)
-  }, [currentTheme, changeTheme])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // only apply on mount / when currentTheme is set programmatically elsewhere via changeTheme itself
+
+  // --- Settings sync: guest → localStorage, signed-in → Firestore ---
+  // modeRef mirrors the LibraryContext/ProfileContext pattern so the
+  // localStorage-write effect below doesn't fire while cloud-subscribed.
+  const modeRef = useRef(user ? 'cloud' : 'guest')
+  // Set to true right before we apply values that came FROM Firestore/local
+  // storage, so the write-back effect below can tell "this change came from
+  // a remote read" apart from "the user just touched a setting" and skip
+  // writing it straight back (which would otherwise loop / thrash writes).
+  const remoteApplyRef = useRef(false)
+  const writeTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    if (!user) {
+      modeRef.current = 'guest'
+      const s = loadLocalSettings()
+      remoteApplyRef.current = true
+      changeTheme(s.theme)
+      setShuffle(s.shuffle)
+      setRepeatMode(s.repeatMode)
+      setLyricsFontFamily(s.lyricsFontFamily)
+      setLyricsFontWeight(s.lyricsFontWeight)
+      setLyricsFontSize(s.lyricsFontSize)
+      return
+    }
+
+    modeRef.current = 'cloud'
+    const userRef = doc(db, 'users', user.uid)
+
+    const unsub = onSnapshot(userRef, (snap) => {
+      const data = snap.data()
+      if (data?.settings) {
+        const s = data.settings
+        remoteApplyRef.current = true
+        if (s.theme) changeTheme(s.theme)
+        if (typeof s.shuffle === 'boolean') setShuffle(s.shuffle)
+        if (s.repeatMode) setRepeatMode(s.repeatMode)
+        if (s.lyricsFontFamily) setLyricsFontFamily(s.lyricsFontFamily)
+        if (s.lyricsFontWeight) setLyricsFontWeight(s.lyricsFontWeight)
+        if (s.lyricsFontSize) setLyricsFontSize(s.lyricsFontSize)
+      }
+      // If no settings field exists yet (brand new account), we deliberately
+      // do nothing here — the write-back effect below will then persist
+      // whatever is currently in memory (carried over from guest mode, or
+      // defaults) as this account's first-ever settings doc.
+    })
+
+    return unsub
+  }, [user, changeTheme])
+
+  // Write-back effect: fires on every settings change. Guest mode writes
+  // to localStorage immediately; signed-in mode debounces writes to
+  // Firestore (sliders like lyrics font size fire rapidly while dragging).
+  useEffect(() => {
+    if (remoteApplyRef.current) {
+      remoteApplyRef.current = false
+      return
+    }
+    const settings = {
+      theme: currentTheme,
+      shuffle,
+      repeatMode,
+      lyricsFontFamily,
+      lyricsFontWeight,
+      lyricsFontSize
+    }
+
+    if (modeRef.current === 'guest') {
+      saveLocalSettings(settings)
+      return
+    }
+
+    if (modeRef.current === 'cloud' && user) {
+      if (writeTimeoutRef.current) clearTimeout(writeTimeoutRef.current)
+      writeTimeoutRef.current = setTimeout(() => {
+        setDoc(doc(db, 'users', user.uid), { settings }, { merge: true }).catch((e) => {
+          console.warn('Failed to save settings to Firestore', e)
+        })
+      }, 500)
+    }
+  }, [currentTheme, shuffle, repeatMode, lyricsFontFamily, lyricsFontWeight, lyricsFontSize, user])
+
+  useEffect(() => {
+    return () => {
+      if (writeTimeoutRef.current) clearTimeout(writeTimeoutRef.current)
+    }
+  }, [])
+
   // Audio setup
   useEffect(() => {
     const audio = new Audio()
@@ -174,6 +317,7 @@ export function PlayerProvider({ children }) {
       audio.pause()
     }
   }, [])
+
   // Sleep Timer countdown
   useEffect(() => {
     if (sleepTimerMinutes <= 0) {
@@ -197,6 +341,7 @@ export function PlayerProvider({ children }) {
     }, 1000)
     return () => clearInterval(interval)
   }, [sleepTimerMinutes])
+
   // Auto-load lyrics from LRCLIB whenever the current track changes, so both
   // the Now Playing preview and the dedicated Lyrics page read the same
   // already-fetched data instead of each re-fetching independently.
@@ -222,7 +367,9 @@ export function PlayerProvider({ children }) {
       .finally(() => { if (isMounted) setLyricsLoading(false) })
     return () => { isMounted = false }
   }, [currentTrack?.id])
+
   const handleEndedRef = useRef(null)
+
   const loadAndPlay = useCallback(async (track) => {
     let playable = track
     let url = bestAudioUrl(track.downloadUrl)
@@ -260,11 +407,13 @@ export function PlayerProvider({ children }) {
       setIsPlaying(false)
     })
   }, [])
+
   const playQueue = useCallback((tracks, startIndex = 0) => {
     setQueue(tracks)
     setQueueIndex(startIndex)
     loadAndPlay(tracks[startIndex])
   }, [loadAndPlay])
+
   const playNow = useCallback((track, contextTracks = null) => {
     if (contextTracks) {
       const idx = contextTracks.findIndex((t) => t.id === track.id)
@@ -283,13 +432,16 @@ export function PlayerProvider({ children }) {
       loadAndPlay(track)
     }
   }, [playQueue, loadAndPlay])
+
   const addToQueue = useCallback((track) => {
     setQueue((prev) => [...prev, track])
   }, [])
+
   const removeFromQueue = useCallback((index) => {
     setQueue((prev) => prev.filter((_, i) => i !== index))
     setQueueIndex((prev) => (index < prev ? prev - 1 : prev))
   }, [])
+
   const clearQueue = useCallback(() => {
     setQueue([])
     setQueueIndex(-1)
@@ -299,6 +451,7 @@ export function PlayerProvider({ children }) {
     }
     setIsPlaying(false)
   }, [])
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current
     if (!audio.src) return
@@ -309,6 +462,7 @@ export function PlayerProvider({ children }) {
       audio.play().then(() => setIsPlaying(true)).catch(() => {})
     }
   }, [isPlaying])
+
   const goNext = useCallback(() => {
     if (!queue.length) return
     if (repeatMode === 'one') {
@@ -331,6 +485,7 @@ export function PlayerProvider({ children }) {
     setQueueIndex(nextIndex)
     loadAndPlay(queue[nextIndex])
   }, [queue, queueIndex, repeatMode, shuffle, loadAndPlay])
+
   const goPrev = useCallback(() => {
     const audio = audioRef.current
     if (audio.currentTime > 3) {
@@ -342,20 +497,24 @@ export function PlayerProvider({ children }) {
     setQueueIndex(prevIndex)
     loadAndPlay(queue[prevIndex])
   }, [queue, queueIndex, repeatMode, loadAndPlay])
+
   handleEndedRef.current = goNext
+
   const seek = useCallback((time) => {
     const audio = audioRef.current
     audio.currentTime = time
     setProgress(time)
   }, [])
+
   const changeVolume = useCallback((v) => {
     setVolume(v)
     audioRef.current.volume = v
   }, [])
+
   const playTrackFromList = useCallback((track, list) => {
     playNow(track, list)
   }, [playNow])
-  
+
   return (
     <PlayerContext.Provider
       value={{
@@ -371,7 +530,7 @@ export function PlayerProvider({ children }) {
         repeatMode,
         isFullPlayerOpen,
         currentTheme,
-        
+
         sleepTimerMinutes,
         sleepTimerRemaining,
         lyrics,
@@ -383,8 +542,7 @@ export function PlayerProvider({ children }) {
         setShuffle,
         setRepeatMode,
         setTheme: changeTheme,
-        
-        
+
         setSleepTimerMinutes,
         setLyricsFontFamily,
         setLyricsFontWeight,
@@ -405,6 +563,7 @@ export function PlayerProvider({ children }) {
     </PlayerContext.Provider>
   )
 }
+
 export function usePlayer() {
   const ctx = useContext(PlayerContext)
   if (!ctx) throw new Error('usePlayer must be used within PlayerProvider')
